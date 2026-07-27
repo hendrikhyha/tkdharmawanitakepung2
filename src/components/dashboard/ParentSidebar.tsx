@@ -9,6 +9,7 @@ import {
   User,
   X,
   Heart,
+  BookOpenCheck,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/LogoutButton";
 import { UserProfile } from "@/types/user";
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/parent", label: "Beranda", icon: LayoutDashboard, exact: true },
   { href: "/parent/timeline", label: "Lini Masa", icon: Clock },
   { href: "/parent/gallery", label: "Galeri Foto", icon: ImageIcon },
+  { href: "/parent/attendance", label: "Kehadiran", icon: BookOpenCheck },
   { href: "/parent/profile", label: "Profil", icon: User },
 ];
 

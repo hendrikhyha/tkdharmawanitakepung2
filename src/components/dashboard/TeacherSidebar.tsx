@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/teacher", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/teacher/activities", label: "Kegiatan", icon: ClipboardList },
+  { href: "/teacher/attendance", label: "Absensi", icon: BookOpenCheck },
   { href: "/teacher/reports", label: "Laporan", icon: FileText },
   { href: "/teacher/students", label: "Siswa", icon: Baby },
   { href: "/teacher/profile", label: "Profil", icon: User },
