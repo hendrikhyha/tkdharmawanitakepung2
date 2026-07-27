@@ -108,17 +108,30 @@ function SelectLabel({
   )
 }
 
+function getChildrenText(children: React.ReactNode): string | undefined {
+  if (typeof children === 'string') return children;
+  if (typeof children === 'number') return String(children);
+  if (Array.isArray(children)) {
+    const texts = children.map(getChildrenText).filter(Boolean);
+    return texts.length > 0 ? texts.join('') : undefined;
+  }
+  if (React.isValidElement(children)) {
+    return getChildrenText((children.props as { children?: React.ReactNode }).children);
+  }
+  return undefined;
+}
+
 function SelectItem({
   className,
   children,
   ...props
 }: SelectPrimitive.Item.Props) {
-  const labelText = typeof children === 'string' ? children : undefined;
+  const labelText = props.label ?? getChildrenText(children);
   
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
-      label={props.label || labelText}
+      label={labelText}
       className={cn(
         "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
