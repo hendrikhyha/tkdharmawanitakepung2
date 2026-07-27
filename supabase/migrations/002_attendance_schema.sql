@@ -3,11 +3,16 @@
 -- Database Migration: Phase 4 - Attendance Feature
 -- ============================================================
 
--- 1. Create Enum for Attendance Status
-CREATE TYPE public.attendance_status AS ENUM ('PRESENT', 'SICK', 'EXCUSED', 'ABSENT');
+-- 1. Create Enum for Attendance Status safely
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'attendance_status') THEN
+        CREATE TYPE public.attendance_status AS ENUM ('PRESENT', 'SICK', 'EXCUSED', 'ABSENT');
+    END IF;
+END$$;
 
--- 2. Create attendances table
-CREATE TABLE public.attendances (
+-- 2. Create attendances table safely
+CREATE TABLE IF NOT EXISTS public.attendances (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   class_id UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
   student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,

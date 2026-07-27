@@ -81,6 +81,7 @@ export default function ReportsPage() {
       headerRow.values = ["No", "Tanggal", "Kegiatan", "Keterangan", "Gambar Foto"];
       headerRow.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
       headerRow.height = 25;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       headerRow.eachCell((cell: any) => {
         cell.fill = {
           type: "pattern",

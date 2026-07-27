@@ -9,7 +9,6 @@ import {
   Baby,
   BookOpen,
   X,
-  BookOpenCheck,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/LogoutButton";
 import { UserProfile } from "@/types/user";

@@ -8,7 +8,6 @@ import {
   Image as ImageIcon,
   User,
   X,
-  Heart,
   BookOpenCheck,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/LogoutButton";

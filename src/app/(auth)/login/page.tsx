@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { BookOpen, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import LoginForm from "@/components/auth/LoginForm";
 import { getCurrentUser } from "@/services/auth";
 

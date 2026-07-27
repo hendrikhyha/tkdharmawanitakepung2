@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { User, Mail, ShieldCheck, KeyRound } from "lucide-react";
-import Link from "next/link";
 
 export const metadata = {
   title: "Profil Guru | Jurnal TK",

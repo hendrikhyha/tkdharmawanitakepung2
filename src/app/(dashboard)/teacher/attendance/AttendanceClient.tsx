@@ -60,6 +60,7 @@ export default function AttendanceClient({ classId, students }: Props) {
   }, [classId, students]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAttendance(date);
   }, [date, fetchAttendance]);
 
@@ -167,7 +168,7 @@ export default function AttendanceClient({ classId, students }: Props) {
                             return (
                               <button
                                 key={opt.value}
-                                onClick={() => handleStatusChange(student.id, opt.value as any)}
+                                onClick={() => handleStatusChange(student.id, opt.value as "PRESENT" | "SICK" | "EXCUSED" | "ABSENT")}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                                   isSelected 
                                     ? `${opt.color.split(" ")[0]} ${opt.color.split(" ")[1]} border-transparent ring-2 ring-offset-2 ring-offset-slate-900 ring-${opt.color.split(" ")[1].split("-")[1]}-500/50` 

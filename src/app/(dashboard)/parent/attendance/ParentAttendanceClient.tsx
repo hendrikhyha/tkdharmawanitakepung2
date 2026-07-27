@@ -36,6 +36,7 @@ export default function ParentAttendanceClient({ students }: Props) {
 
   useEffect(() => {
     if (selectedStudent && startDate && endDate) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchAttendance(selectedStudent, startDate, endDate);
     }
   }, [selectedStudent, startDate, endDate, fetchAttendance]);

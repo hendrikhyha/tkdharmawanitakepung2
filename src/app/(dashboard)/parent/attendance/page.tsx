@@ -44,6 +44,7 @@ export default async function ParentAttendancePage() {
         </p>
       </div>
 
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <ParentAttendanceClient students={students as any} />
     </div>
   );

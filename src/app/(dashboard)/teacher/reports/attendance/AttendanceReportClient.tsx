@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { format, startOfWeek, endOfWeek, subDays, startOfMonth, endOfMonth } from "date-fns";
-import { id } from "date-fns/locale";
-import { Loader2, Calendar as CalendarIcon, Download } from "lucide-react";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAttendanceReport, AttendanceRecord } from "@/services/attendance";
@@ -39,6 +38,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
 
   useEffect(() => {
     if (startDate && endDate) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchReport(startDate, endDate);
     }
   }, [startDate, endDate, fetchReport]);
