@@ -251,7 +251,7 @@ export default function StudentsTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Kelas</Label>
-              <Select onValueChange={(val) => addForm.setValue("class_id", val === "none" ? null : val)} defaultValue="none">
+              <Select onValueChange={(val: string) => addForm.setValue("class_id", val === "none" ? null : val)} defaultValue="none">
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih kelas" />
                 </SelectTrigger>
@@ -267,7 +267,7 @@ export default function StudentsTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Orang Tua</Label>
-              <Select onValueChange={(val) => addForm.setValue("parent_id", val === "none" ? null : val)} defaultValue="none">
+              <Select onValueChange={(val: string) => addForm.setValue("parent_id", val === "none" ? null : val)} defaultValue="none">
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih orang tua" />
                 </SelectTrigger>
@@ -317,7 +317,7 @@ export default function StudentsTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Kelas</Label>
-              <Select onValueChange={(val) => editForm.setValue("class_id", val === "none" ? null : val)} defaultValue={selectedStudent?.class_id ?? "none"}>
+              <Select onValueChange={(val: string) => editForm.setValue("class_id", val === "none" ? null : val)} defaultValue={selectedStudent?.class_id ?? "none"}>
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih kelas" />
                 </SelectTrigger>
@@ -333,7 +333,7 @@ export default function StudentsTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Orang Tua</Label>
-              <Select onValueChange={(val) => editForm.setValue("parent_id", val === "none" ? null : val)} defaultValue={selectedStudent?.parent_id ?? "none"}>
+              <Select onValueChange={(val: string) => editForm.setValue("parent_id", val === "none" ? null : val)} defaultValue={selectedStudent?.parent_id ?? "none"}>
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih orang tua" />
                 </SelectTrigger>

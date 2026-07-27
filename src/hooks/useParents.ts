@@ -10,6 +10,7 @@ export interface ParentData {
   users: {
     name: string;
     email: string;
+    avatar_url: string | null;
   };
 }
 
@@ -27,7 +28,8 @@ export function useParents() {
           phone,
           users (
             name,
-            email
+            email,
+            avatar_url
           )
         `)
         .order("created_at", { ascending: false });

@@ -9,6 +9,7 @@ export interface StudentData {
   class_id: string | null;
   parent_id: string | null;
   birth_date: string | null;
+  photo: string | null;
   classes: {
     name: string;
   } | null;
@@ -33,6 +34,7 @@ export function useStudents() {
           class_id,
           parent_id,
           birth_date,
+          photo,
           classes (
             name
           ),

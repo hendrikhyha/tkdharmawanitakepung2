@@ -34,22 +34,23 @@ function useSelectLabels() {
 function extractLabelsFromChildren(children: React.ReactNode, map: Map<string, string>) {
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
+    const element = child as React.ReactElement<any>;
     
     // If it's a SelectItem, grab its value and label
-    if (child.type === SelectItem) {
-      const value = child.props.value;
-      const labelText = child.props.label ?? getChildrenText(child.props.children);
+    if (element.type === SelectItem) {
+      const value = element.props.value;
+      const labelText = element.props.label ?? getChildrenText(element.props.children);
       if (value != null && labelText) {
         map.set(String(value), labelText);
       }
-    } else if (child.props && child.props.children) {
-      extractLabelsFromChildren(child.props.children, map);
+    } else if (element.props && element.props.children) {
+      extractLabelsFromChildren(element.props.children, map);
     }
   });
 }
 
 // --- Custom Select Root that provides the label context ---
-function Select({ children, ...props }: SelectPrimitive.Root.Props) {
+function Select({ children, ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
   // Extract labels statically on every render so they are available immediately
   // before the popup is even opened (and before SelectItems are mounted).
   const labelsMap = React.useMemo(() => {
