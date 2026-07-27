@@ -6,7 +6,44 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+// --- Custom Context to track value → label mapping ---
+type SelectLabelsContextValue = {
+  registerLabel: (value: string, label: string) => void;
+  unregisterLabel: (value: string) => void;
+  getLabel: (value: string | null) => string | undefined;
+}
+
+const SelectLabelsContext = React.createContext<SelectLabelsContextValue | null>(null);
+
+function useSelectLabels() {
+  return React.useContext(SelectLabelsContext);
+}
+
+// --- Custom Select Root that provides the label context ---
+function Select({ children, ...props }: SelectPrimitive.Root.Props) {
+  const labelsMapRef = React.useRef<Map<string, string>>(new Map());
+
+  const registerLabel = React.useCallback((value: string, label: string) => {
+    labelsMapRef.current.set(value, label);
+  }, []);
+
+  const unregisterLabel = React.useCallback((value: string) => {
+    labelsMapRef.current.delete(value);
+  }, []);
+
+  const getLabel = React.useCallback((value: string | null) => {
+    if (!value) return undefined;
+    return labelsMapRef.current.get(value);
+  }, []);
+
+  return (
+    <SelectLabelsContext.Provider value={{ registerLabel, unregisterLabel, getLabel }}>
+      <SelectPrimitive.Root {...props}>
+        {children}
+      </SelectPrimitive.Root>
+    </SelectLabelsContext.Provider>
+  );
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -18,13 +55,23 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   )
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+// --- SelectValue that resolves label from context ---
+function SelectValue({ className, placeholder, ...props }: SelectPrimitive.Value.Props) {
+  const ctx = useSelectLabels();
+
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
+      placeholder={placeholder}
       {...props}
-    />
+    >
+      {ctx ? (value: string | null) => {
+        if (!value || value === 'none') return null; // will show placeholder
+        const label = ctx.getLabel(value);
+        return label ?? value; // fallback to value if label not found
+      } : undefined}
+    </SelectPrimitive.Value>
   )
 }
 
@@ -83,7 +130,7 @@ function SelectContent({
         <SelectPrimitive.Popup
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
-          className={cn("relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+          className={cn("relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className)}
           {...props}
         >
           <SelectScrollUpButton />
@@ -121,18 +168,34 @@ function getChildrenText(children: React.ReactNode): string | undefined {
   return undefined;
 }
 
+// --- SelectItem that registers its label in context on mount ---
 function SelectItem({
   className,
   children,
   label: labelProp,
+  value,
   ...rest
 }: SelectPrimitive.Item.Props) {
+  const ctx = useSelectLabels();
   const labelText = labelProp ?? getChildrenText(children);
-  
+
+  // Register value→label mapping on mount, unregister on unmount
+  React.useEffect(() => {
+    if (ctx && value != null && labelText) {
+      ctx.registerLabel(String(value), labelText);
+    }
+    return () => {
+      if (ctx && value != null) {
+        ctx.unregisterLabel(String(value));
+      }
+    };
+  }, [ctx, value, labelText]);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       label={labelText}
+      value={value}
       className={cn(
         "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
@@ -179,8 +242,7 @@ function SelectScrollUpButton({
       )}
       {...props}
     >
-      <ChevronUpIcon
-      />
+      <ChevronUpIcon />
     </SelectPrimitive.ScrollUpArrow>
   )
 }
@@ -198,8 +260,7 @@ function SelectScrollDownButton({
       )}
       {...props}
     >
-      <ChevronDownIcon
-      />
+      <ChevronDownIcon />
     </SelectPrimitive.ScrollDownArrow>
   )
 }
