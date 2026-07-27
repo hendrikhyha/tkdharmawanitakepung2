@@ -226,7 +226,7 @@ export default function ClassesTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Wali Kelas</Label>
-              <Select onValueChange={(val: string) => addForm.setValue("teacher_id", val === "none" ? null : val)} defaultValue="none">
+              <Select onValueChange={(val: any) => addForm.setValue("teacher_id", val === "none" ? null : val)} defaultValue="none">
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih guru" />
                 </SelectTrigger>
@@ -242,7 +242,7 @@ export default function ClassesTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Tahun Ajaran</Label>
-              <Select onValueChange={(val: string) => addForm.setValue("academic_year_id", val === "none" ? null : val)} defaultValue="none">
+              <Select onValueChange={(val: any) => addForm.setValue("academic_year_id", val === "none" ? null : val)} defaultValue="none">
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih tahun ajaran" />
                 </SelectTrigger>
@@ -280,7 +280,7 @@ export default function ClassesTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Wali Kelas</Label>
-              <Select onValueChange={(val: string) => editForm.setValue("teacher_id", val === "none" ? null : val)} defaultValue={selectedClass?.teacher_id ?? "none"}>
+              <Select onValueChange={(val: any) => editForm.setValue("teacher_id", val === "none" ? null : val)} defaultValue={selectedClass?.teacher_id ?? "none"}>
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih guru" />
                 </SelectTrigger>
@@ -296,7 +296,7 @@ export default function ClassesTable() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/80">Tahun Ajaran</Label>
-              <Select onValueChange={(val: string) => editForm.setValue("academic_year_id", val === "none" ? null : val)} defaultValue={selectedClass?.academic_year_id ?? "none"}>
+              <Select onValueChange={(val: any) => editForm.setValue("academic_year_id", val === "none" ? null : val)} defaultValue={selectedClass?.academic_year_id ?? "none"}>
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
                   <SelectValue placeholder="Pilih tahun ajaran" />
                 </SelectTrigger>
