@@ -6,38 +6,65 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-// --- Custom Context to track value → label mapping ---
-type SelectLabelsContextValue = {
-  registerLabel: (value: string, label: string) => void;
-  unregisterLabel: (value: string) => void;
-  getLabel: (value: string | null) => string | undefined;
+// --- Helper to extract text from React children recursively ---
+function getChildrenText(children: React.ReactNode): string | undefined {
+  if (typeof children === 'string') return children;
+  if (typeof children === 'number') return String(children);
+  if (Array.isArray(children)) {
+    const texts = children.map(getChildrenText).filter(Boolean);
+    return texts.length > 0 ? texts.join('') : undefined;
+  }
+  if (React.isValidElement(children)) {
+    return getChildrenText((children.props as { children?: React.ReactNode }).children);
+  }
+  return undefined;
 }
 
+// --- Custom Context to track value → label mapping ---
+type SelectLabelsContextValue = {
+  getLabel: (value: string | null) => string | undefined;
+}
 const SelectLabelsContext = React.createContext<SelectLabelsContextValue | null>(null);
 
 function useSelectLabels() {
   return React.useContext(SelectLabelsContext);
 }
 
+// Recursively traverse children to find SelectItem and extract labels
+function extractLabelsFromChildren(children: React.ReactNode, map: Map<string, string>) {
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return;
+    
+    // If it's a SelectItem, grab its value and label
+    if (child.type === SelectItem) {
+      const value = child.props.value;
+      const labelText = child.props.label ?? getChildrenText(child.props.children);
+      if (value != null && labelText) {
+        map.set(String(value), labelText);
+      }
+    } else if (child.props && child.props.children) {
+      extractLabelsFromChildren(child.props.children, map);
+    }
+  });
+}
+
 // --- Custom Select Root that provides the label context ---
 function Select({ children, ...props }: SelectPrimitive.Root.Props) {
-  const labelsMapRef = React.useRef<Map<string, string>>(new Map());
-
-  const registerLabel = React.useCallback((value: string, label: string) => {
-    labelsMapRef.current.set(value, label);
-  }, []);
-
-  const unregisterLabel = React.useCallback((value: string) => {
-    labelsMapRef.current.delete(value);
-  }, []);
+  // Extract labels statically on every render so they are available immediately
+  // before the popup is even opened (and before SelectItems are mounted).
+  const labelsMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    extractLabelsFromChildren(children, map);
+    return map;
+  }, [children]);
 
   const getLabel = React.useCallback((value: string | null) => {
     if (!value) return undefined;
-    return labelsMapRef.current.get(value);
-  }, []);
+    return labelsMap.get(value);
+  }, [labelsMap]);
 
   return (
-    <SelectLabelsContext.Provider value={{ registerLabel, unregisterLabel, getLabel }}>
+    <SelectLabelsContext.Provider value={{ getLabel }}>
       <SelectPrimitive.Root {...props}>
         {children}
       </SelectPrimitive.Root>
@@ -155,20 +182,6 @@ function SelectLabel({
   )
 }
 
-function getChildrenText(children: React.ReactNode): string | undefined {
-  if (typeof children === 'string') return children;
-  if (typeof children === 'number') return String(children);
-  if (Array.isArray(children)) {
-    const texts = children.map(getChildrenText).filter(Boolean);
-    return texts.length > 0 ? texts.join('') : undefined;
-  }
-  if (React.isValidElement(children)) {
-    return getChildrenText((children.props as { children?: React.ReactNode }).children);
-  }
-  return undefined;
-}
-
-// --- SelectItem that registers its label in context on mount ---
 function SelectItem({
   className,
   children,
@@ -176,20 +189,7 @@ function SelectItem({
   value,
   ...rest
 }: SelectPrimitive.Item.Props) {
-  const ctx = useSelectLabels();
   const labelText = labelProp ?? getChildrenText(children);
-
-  // Register value→label mapping on mount, unregister on unmount
-  React.useEffect(() => {
-    if (ctx && value != null && labelText) {
-      ctx.registerLabel(String(value), labelText);
-    }
-    return () => {
-      if (ctx && value != null) {
-        ctx.unregisterLabel(String(value));
-      }
-    };
-  }, [ctx, value, labelText]);
 
   return (
     <SelectPrimitive.Item
