@@ -126,8 +126,13 @@ export default function ParentSidebar({
         {/* User Footer */}
         <div className="border-t border-slate-200/50 p-4">
           <div className="mb-4 flex items-center gap-3 rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-400 text-base font-bold text-white shadow-sm shadow-pink-200">
-              {user.name.charAt(0).toUpperCase()}
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-400 text-base font-bold text-white shadow-sm shadow-pink-200 overflow-hidden border border-white/50">
+              {user.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="flex flex-col overflow-hidden">
               <span className="truncate text-sm font-bold text-slate-800">

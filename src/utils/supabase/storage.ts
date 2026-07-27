@@ -47,3 +47,50 @@ export async function deleteActivityPhoto(path: string): Promise<{ error: string
 
   return { error: null };
 }
+
+/**
+ * Uploads a profile photo to the Supabase Storage 'profiles' bucket.
+ */
+export async function uploadProfilePhoto(
+  file: File,
+  path: string
+): Promise<{ url: string | null; error: string | null }> {
+  const supabase = await createClient();
+
+  // Convert File to ArrayBuffer for uploading
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { data, error } = await supabase.storage
+    .from("profiles")
+    .upload(path, buffer, {
+      contentType: file.type,
+      upsert: true,
+    });
+
+  if (error) {
+    return { url: null, error: error.message };
+  }
+
+  // Get public URL
+  const { data: publicUrlData } = supabase.storage
+    .from("profiles")
+    .getPublicUrl(data.path);
+
+  return { url: publicUrlData.publicUrl, error: null };
+}
+
+/**
+ * Deletes a file from Supabase Storage 'profiles' bucket.
+ */
+export async function deleteProfilePhoto(path: string): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.storage.from("profiles").remove([path]);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
+}

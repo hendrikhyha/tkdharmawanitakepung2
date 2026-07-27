@@ -46,6 +46,11 @@ export async function createTeacher(data: UserFormValues) {
     return { error: teacherError.message };
   }
 
+  // 3. Update public.users to add avatar_url if provided
+  if (data.avatar_url) {
+    await supabase.from("users").update({ avatar_url: data.avatar_url }).eq("id", userId);
+  }
+
   return { success: true };
 }
 
@@ -64,7 +69,7 @@ export async function updateTeacher(id: string, userId: string, data: UserUpdate
   // Update public.users table
   const { error: userError } = await supabase
     .from("users")
-    .update({ name: data.name, email: data.email })
+    .update({ name: data.name, email: data.email, avatar_url: data.avatar_url ?? null })
     .eq("id", userId);
 
   if (userError) return { error: userError.message };
@@ -127,6 +132,11 @@ export async function createParent(data: UserFormValues) {
     return { error: parentError.message };
   }
 
+  // 3. Update public.users to add avatar_url if provided
+  if (data.avatar_url) {
+    await supabase.from("users").update({ avatar_url: data.avatar_url }).eq("id", userId);
+  }
+
   return { success: true };
 }
 
@@ -144,7 +154,7 @@ export async function updateParent(id: string, userId: string, data: UserUpdateF
 
   const { error: userError } = await supabase
     .from("users")
-    .update({ name: data.name, email: data.email })
+    .update({ name: data.name, email: data.email, avatar_url: data.avatar_url ?? null })
     .eq("id", userId);
 
   if (userError) return { error: userError.message };
@@ -218,6 +228,7 @@ export async function createStudent(data: StudentFormValues) {
     class_id: data.class_id || null,
     parent_id: data.parent_id || null,
     birth_date: data.birth_date || null,
+    photo: data.photo || null,
   });
 
   if (error) return { error: error.message };
@@ -234,6 +245,7 @@ export async function updateStudent(id: string, data: StudentFormValues) {
       class_id: data.class_id || null,
       parent_id: data.parent_id || null,
       birth_date: data.birth_date || null,
+      photo: data.photo || null,
     })
     .eq("id", id);
 
@@ -265,3 +277,20 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   if (error) return { error: error.message };
   return { success: true };
 }
+
+// ----------------------------------------------------------------------
+// FILE UPLOADS
+// ----------------------------------------------------------------------
+
+import { uploadProfilePhoto, deleteProfilePhoto } from "@/utils/supabase/storage";
+
+export async function uploadAvatar(formData: FormData, path: string) {
+  const file = formData.get("file") as File | null;
+  if (!file) return { error: "No file provided", url: null };
+  return await uploadProfilePhoto(file, path);
+}
+
+export async function deleteAvatar(path: string) {
+  return await deleteProfilePhoto(path);
+}
+

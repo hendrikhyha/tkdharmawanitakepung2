@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTeachers, TeacherData } from "@/hooks/useTeachers";
 import { userSchema, userUpdateSchema, resetPasswordSchema, UserFormValues, UserUpdateFormValues, ResetPasswordFormValues } from "@/lib/validations/master";
 import { createTeacher, updateTeacher, deleteTeacher, resetUserPassword } from "@/app/actions/master";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 
 import {
   Table,
@@ -213,7 +214,19 @@ export default function TeachersTable() {
             ) : (
               filteredTeachers?.map((teacher) => (
                 <TableRow key={teacher.id} className="border-white/10 hover:bg-white/5 transition-colors">
-                  <TableCell className="font-medium text-white">{teacher.users.name}</TableCell>
+                  <TableCell className="font-medium text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden flex items-center justify-center shrink-0 border border-white/5">
+                        {teacher.users.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={teacher.users.avatar_url} alt={teacher.users.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-white/50 font-bold">{teacher.users.name.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <span>{teacher.users.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-white/70">{teacher.users.email}</TableCell>
                   <TableCell className="text-white/70">{teacher.phone || "-"}</TableCell>
                   <TableCell>
@@ -248,6 +261,14 @@ export default function TeachersTable() {
             <DialogTitle>Tambah Guru</DialogTitle>
           </DialogHeader>
           <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4 mt-4">
+            <div className="flex justify-center mb-6">
+              <AvatarUpload
+                value={addForm.watch("avatar_url")}
+                onChange={(url) => addForm.setValue("avatar_url", url)}
+                pathPrefix="teachers"
+                fallbackText={addForm.watch("name") || "T"}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="name" className="text-white/80">Nama Lengkap</Label>
               <Input id="name" {...addForm.register("name")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30" />
@@ -282,9 +303,17 @@ export default function TeachersTable() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Edit Data Guru</DialogTitle>
+            <DialogTitle>Edit Guru</DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4 mt-4">
+            <div className="flex justify-center mb-6">
+              <AvatarUpload
+                value={editForm.watch("avatar_url")}
+                onChange={(url) => editForm.setValue("avatar_url", url)}
+                pathPrefix="teachers"
+                fallbackText={editForm.watch("name") || "T"}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-name" className="text-white/80">Nama Lengkap</Label>
               <Input id="edit-name" {...editForm.register("name")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30" />

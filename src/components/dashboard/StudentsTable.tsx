@@ -10,6 +10,7 @@ import { useClasses } from "@/hooks/useClasses";
 import { useParents } from "@/hooks/useParents";
 import { studentSchema, StudentFormValues } from "@/lib/validations/master";
 import { createStudent, updateStudent, deleteStudent } from "@/app/actions/master";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 
 import {
   Table,
@@ -190,7 +191,19 @@ export default function StudentsTable() {
             ) : (
               filteredStudents?.map((s) => (
                 <TableRow key={s.id} className="border-white/10 hover:bg-white/5 transition-colors">
-                  <TableCell className="font-medium text-white">{s.name}</TableCell>
+                  <TableCell className="font-medium text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden flex items-center justify-center shrink-0 border border-white/5">
+                        {s.photo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={s.photo} alt={s.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-white/50 font-bold">{s.name.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <span>{s.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-white/70">{s.classes?.name || "-"}</TableCell>
                   <TableCell className="text-white/70">{s.parents?.users.name || "-"}</TableCell>
                   <TableCell className="text-white/70">{s.birth_date || "-"}</TableCell>
@@ -223,6 +236,14 @@ export default function StudentsTable() {
             <DialogTitle>Tambah Siswa</DialogTitle>
           </DialogHeader>
           <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4 mt-4">
+            <div className="flex justify-center mb-6">
+              <AvatarUpload
+                value={addForm.watch("photo")}
+                onChange={(url) => addForm.setValue("photo", url)}
+                pathPrefix="students"
+                fallbackText={addForm.watch("name") || "S"}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="name" className="text-white/80">Nama Lengkap</Label>
               <Input id="name" {...addForm.register("name")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30" />
@@ -282,6 +303,14 @@ export default function StudentsTable() {
             <DialogTitle>Edit Siswa</DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4 mt-4">
+            <div className="flex justify-center mb-6">
+              <AvatarUpload
+                value={editForm.watch("photo")}
+                onChange={(url) => editForm.setValue("photo", url)}
+                pathPrefix="students"
+                fallbackText={editForm.watch("name") || "S"}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-name" className="text-white/80">Nama Lengkap</Label>
               <Input id="edit-name" {...editForm.register("name")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30" />

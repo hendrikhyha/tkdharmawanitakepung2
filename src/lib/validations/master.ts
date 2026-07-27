@@ -6,6 +6,7 @@ export const userSchema = z.object({
   email: z.string().email("Email tidak valid"),
   phone: z.string().optional(),
   password: z.string().optional(),
+  avatar_url: z.string().optional().nullable(),
 });
 
 // For update, we don't always need to change the email.
@@ -36,6 +37,7 @@ export const studentSchema = z.object({
   class_id: z.string().uuid("Pilih kelas").optional().nullable(),
   parent_id: z.string().uuid("Pilih orang tua").optional().nullable(),
   birth_date: z.string().optional().nullable(), // ISO string YYYY-MM-DD
+  photo: z.string().optional().nullable(),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;

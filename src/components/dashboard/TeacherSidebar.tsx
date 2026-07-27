@@ -130,8 +130,13 @@ export default function TeacherSidebar({
         {/* User Footer */}
         <div className="border-t border-white/10 p-4">
           <div className="mb-4 flex items-center gap-3 rounded-xl bg-white/5 p-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white">
-              {user.name.charAt(0).toUpperCase()}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white overflow-hidden border border-white/10">
+              {user.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="flex flex-col overflow-hidden">
               <span className="truncate text-sm font-medium text-white">

@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useParents, ParentData } from "@/hooks/useParents";
 import { userSchema, userUpdateSchema, resetPasswordSchema, UserFormValues, UserUpdateFormValues, ResetPasswordFormValues } from "@/lib/validations/master";
 import { createParent, updateParent, deleteParent, resetUserPassword } from "@/app/actions/master";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 
 import {
   Table,
@@ -213,7 +214,19 @@ export default function ParentsTable() {
             ) : (
               filteredParents?.map((parent) => (
                 <TableRow key={parent.id} className="border-white/10 hover:bg-white/5 transition-colors">
-                  <TableCell className="font-medium text-white">{parent.users.name}</TableCell>
+                  <TableCell className="font-medium text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden flex items-center justify-center shrink-0 border border-white/5">
+                        {parent.users.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={parent.users.avatar_url} alt={parent.users.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-white/50 font-bold">{parent.users.name.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <span>{parent.users.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-white/70">{parent.users.email}</TableCell>
                   <TableCell className="text-white/70">{parent.phone || "-"}</TableCell>
                   <TableCell>
@@ -248,6 +261,14 @@ export default function ParentsTable() {
             <DialogTitle>Tambah Orang Tua</DialogTitle>
           </DialogHeader>
           <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4 mt-4">
+            <div className="flex justify-center mb-6">
+              <AvatarUpload
+                value={addForm.watch("avatar_url")}
+                onChange={(url) => addForm.setValue("avatar_url", url)}
+                pathPrefix="parents"
+                fallbackText={addForm.watch("name") || "P"}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="name" className="text-white/80">Nama Lengkap</Label>
               <Input id="name" {...addForm.register("name")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30" />
@@ -282,9 +303,17 @@ export default function ParentsTable() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Edit Data Orang Tua</DialogTitle>
+            <DialogTitle>Edit Orang Tua</DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4 mt-4">
+            <div className="flex justify-center mb-6">
+              <AvatarUpload
+                value={editForm.watch("avatar_url")}
+                onChange={(url) => editForm.setValue("avatar_url", url)}
+                pathPrefix="parents"
+                fallbackText={editForm.watch("name") || "P"}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-name" className="text-white/80">Nama Lengkap</Label>
               <Input id="edit-name" {...editForm.register("name")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30" />

@@ -118,8 +118,13 @@ export default function AdminSidebar({
         {/* User Info + Logout */}
         <div className="border-t border-white/10 px-3 py-4">
           <div className="mb-2 flex items-center gap-3 rounded-xl px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-xs font-bold text-yellow-900">
-              {user.name.charAt(0).toUpperCase()}
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-xs font-bold text-yellow-900 overflow-hidden border border-white/10">
+              {user.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-white">
