@@ -11,7 +11,8 @@ export interface ParentDashboardData {
   children: ChildInfo[];
   recentActivities: Array<{
     id: string;
-    title: string;
+    theme: string;
+    sub_theme: string | null;
     description: string | null;
     activity_date: string;
     activity_time: string | null;
@@ -78,7 +79,8 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
       .from("activities")
       .select(`
         id,
-        title,
+        theme,
+        sub_theme,
         description,
         activity_date,
         activity_time,

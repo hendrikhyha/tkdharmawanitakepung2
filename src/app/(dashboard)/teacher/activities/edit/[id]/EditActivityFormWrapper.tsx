@@ -8,7 +8,8 @@ import { updateActivity } from "@/app/actions/activities";
 interface EditActivityFormWrapperProps {
   activity: {
     id: string;
-    title: string;
+    theme: string;
+    sub_theme: string | null;
     description: string | null;
     activity_date: string;
     activity_time: string | null;

@@ -143,7 +143,7 @@ export default function ParentSidebar({
               </span>
             </div>
           </div>
-          <LogoutButton />
+          <LogoutButton className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50" />
         </div>
       </aside>
     </>

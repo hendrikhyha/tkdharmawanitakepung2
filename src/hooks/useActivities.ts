@@ -11,7 +11,8 @@ export interface ActivityPhoto {
 
 export interface ActivityData {
   id: string;
-  title: string;
+  theme: string;
+  sub_theme: string | null;
   description: string | null;
   activity_date: string;
   activity_time: string | null;
@@ -43,7 +44,8 @@ export function useActivities(date: string) {
         .from("activities")
         .select(`
           id,
-          title,
+          theme,
+          sub_theme,
           description,
           activity_date,
           activity_time,

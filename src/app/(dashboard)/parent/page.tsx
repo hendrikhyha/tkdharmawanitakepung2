@@ -131,7 +131,12 @@ export default async function ParentDashboard() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-slate-800 text-lg group-hover:text-pink-600 transition-colors">{activity.title}</h3>
+                    <h3 className="font-bold text-slate-800 text-lg group-hover:text-pink-600 transition-colors">{activity.theme}</h3>
+                    {activity.sub_theme && activity.sub_theme !== "-" && (
+                      <p className="mt-1 text-sm font-bold text-pink-500">
+                        {activity.sub_theme}
+                      </p>
+                    )}
                     <p className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
                       {format(new Date(activity.activity_date), "d MMMM yyyy", { locale: id })}

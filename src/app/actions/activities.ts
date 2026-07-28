@@ -35,15 +35,16 @@ export async function createActivity(formData: FormData) {
     const supabase = await createClient();
     const { teacherId, classId } = await getTeacherContext(supabase);
 
-    const title = formData.get("title") as string;
+    const theme = formData.get("theme") as string;
+    const sub_theme = formData.get("sub_theme") as string || null;
     const description = formData.get("description") as string;
     const activity_date = formData.get("activity_date") as string;
     const activity_time = formData.get("activity_time") as string || null;
     const status = formData.get("status") as "DRAFT" | "PUBLISHED";
     const photos = formData.getAll("photos") as File[];
 
-    if (!title || !activity_date) {
-      return { error: "Judul dan tanggal wajib diisi" };
+    if (!theme || !activity_date) {
+      return { error: "Tema dan tanggal wajib diisi" };
     }
 
     // 1. Get next sort order
@@ -61,7 +62,8 @@ export async function createActivity(formData: FormData) {
       .insert({
         teacher_id: teacherId,
         class_id: classId,
-        title,
+        theme,
+        sub_theme,
         description: description || null,
         activity_date,
         activity_time,
@@ -110,7 +112,8 @@ export async function updateActivity(activityId: string, formData: FormData) {
     const supabase = await createClient();
     const { teacherId } = await getTeacherContext(supabase);
 
-    const title = formData.get("title") as string;
+    const theme = formData.get("theme") as string;
+    const sub_theme = formData.get("sub_theme") as string || null;
     const description = formData.get("description") as string;
     const activity_date = formData.get("activity_date") as string;
     const activity_time = formData.get("activity_time") as string || null;
@@ -120,15 +123,16 @@ export async function updateActivity(activityId: string, formData: FormData) {
     const photosToDelete = JSON.parse(formData.get("photos_to_delete") as string || "[]") as string[]; // public URLs
     const newPhotos = formData.getAll("new_photos") as File[];
 
-    if (!title || !activity_date) {
-      return { error: "Judul dan tanggal wajib diisi" };
+    if (!theme || !activity_date) {
+      return { error: "Tema dan tanggal wajib diisi" };
     }
 
     // 1. Update basic info
     const { error: updateError } = await supabase
       .from("activities")
       .update({
-        title,
+        theme,
+        sub_theme,
         description: description || null,
         activity_date,
         activity_time,

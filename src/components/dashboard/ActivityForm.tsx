@@ -11,7 +11,8 @@ import imageCompression from "browser-image-compression";
 export interface ActivityFormProps {
   initialData?: {
     id: string;
-    title: string;
+    theme: string;
+    sub_theme: string | null;
     description: string | null;
     activity_date: string;
     activity_time: string | null;
@@ -43,7 +44,8 @@ export default function ActivityForm({
   } = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
-      title: initialData?.title || "",
+      theme: initialData?.theme || "",
+      sub_theme: initialData?.sub_theme || "",
       description: initialData?.description || "",
       activity_date: initialData?.activity_date || new Date().toISOString().split("T")[0],
       activity_time: initialData?.activity_time?.slice(0, 5) || "",
@@ -103,7 +105,8 @@ export default function ActivityForm({
   const handleFormSubmit = async (values: ActivityFormValues) => {
     setServerError(null);
     const formData = new FormData();
-    formData.append("title", values.title);
+    formData.append("theme", values.theme);
+    formData.append("sub_theme", values.sub_theme || "");
     formData.append("description", values.description || "");
     formData.append("activity_date", values.activity_date);
     formData.append("activity_time", values.activity_time || "");
@@ -139,15 +142,26 @@ export default function ActivityForm({
       </div>
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-        {/* Title */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-white/80">Judul Kegiatan</label>
-          <input
-            {...register("title")}
-            placeholder="Contoh: Doa Pagi bersama"
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder:text-white/30 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 outline-none transition"
-          />
-          {errors.title && <p className="text-xs text-red-400">{errors.title.message}</p>}
+        {/* Theme & Sub Theme */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/80">Tema Kegiatan</label>
+            <input
+              {...register("theme")}
+              placeholder="Contoh: Lingkungan"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder:text-white/30 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 outline-none transition"
+            />
+            {errors.theme && <p className="text-xs text-red-400">{errors.theme.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/80">Sub Tema</label>
+            <input
+              {...register("sub_theme")}
+              placeholder="Contoh: Menjaga Kebersihan Lingkungan Sekolah"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder:text-white/30 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 outline-none transition"
+            />
+            {errors.sub_theme && <p className="text-xs text-red-400">{errors.sub_theme.message}</p>}
+          </div>
         </div>
 
         {/* Description */}

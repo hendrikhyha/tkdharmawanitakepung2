@@ -159,8 +159,13 @@ export default function ActivitiesPage() {
                     </span>
                   </div>
                   <h3 className="mt-2 text-lg font-bold text-white leading-tight">
-                    {activity.title}
+                    {activity.theme}
                   </h3>
+                  {activity.sub_theme && activity.sub_theme !== "-" && (
+                    <p className="mt-1 text-sm font-medium text-emerald-400">
+                      {activity.sub_theme}
+                    </p>
+                  )}
                   {activity.description && (
                     <p className="mt-2 text-sm text-white/60 line-clamp-3">
                       {activity.description}

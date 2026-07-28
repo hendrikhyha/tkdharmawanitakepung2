@@ -10,7 +10,8 @@ export const metadata = {
 
 interface TimelineActivity {
   id: string;
-  title: string;
+  theme: string;
+  sub_theme: string | null;
   description: string | null;
   activity_date: string;
   activity_time: string | null;
@@ -148,8 +149,13 @@ export default async function ParentTimelinePage() {
                     </div>
 
                     <h3 className="text-lg font-extrabold text-slate-800">
-                      {activity.title}
+                      {activity.theme}
                     </h3>
+                    {activity.sub_theme && activity.sub_theme !== "-" && (
+                      <p className="mt-1 text-sm font-bold text-pink-500">
+                        {activity.sub_theme}
+                      </p>
+                    )}
 
                     {activity.description && (
                       <p className="mt-3 text-sm text-slate-600 leading-relaxed font-medium">

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { User, Mail, ShieldCheck, KeyRound } from "lucide-react";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { revalidatePath } from "next/cache";
 
 export const metadata = {
   title: "Profil Guru | Jurnal TK",
@@ -31,6 +33,14 @@ export default async function TeacherProfilePage() {
     .eq("user_id", user.id)
     .single();
 
+  async function handleAvatarChange(url: string) {
+    "use server";
+    const supabase = await createClient();
+    await supabase.from("users").update({ avatar_url: url }).eq("id", user!.id);
+    revalidatePath("/teacher/profile");
+    revalidatePath("/teacher"); // also update header
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300 max-w-2xl">
       <div>
@@ -44,8 +54,13 @@ export default async function TeacherProfilePage() {
 
       <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center border-b border-white/10 pb-8 mb-8">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-4xl font-bold text-white shadow-xl shadow-emerald-500/20">
-            {profile.name.charAt(0).toUpperCase()}
+          <div className="flex-shrink-0">
+            <AvatarUpload
+              value={profile.avatar_url}
+              onChange={handleAvatarChange}
+              pathPrefix="teachers"
+              fallbackText={profile.name}
+            />
           </div>
           <div className="space-y-1">
             <h2 className="text-2xl font-bold text-white">{profile.name}</h2>

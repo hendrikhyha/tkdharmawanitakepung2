@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import {
@@ -13,8 +13,9 @@ import {
   FileSpreadsheet,
   Printer,
   Image as ImageIcon,
+  User,
 } from "lucide-react";
-import { fetchReportData } from "@/app/actions/reports";
+import { fetchReportData, fetchTeacherStudents } from "@/app/actions/reports";
 import { ReportData } from "@/services/reports";
 import { Input } from "@/components/ui/input";
 
@@ -28,13 +29,25 @@ export default function ReportsPage() {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<string>("ALL");
+  const [students, setStudents] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    const loadStudents = async () => {
+      const res = await fetchTeacherStudents();
+      if (res.data) {
+        setStudents(res.data);
+      }
+    };
+    loadStudents();
+  }, []);
 
   const handleGenerate = async () => {
     setIsLoading(true);
     setError(null);
     setReportData(null);
 
-    const res = await fetchReportData(reportType, selectedDate);
+    const res = await fetchReportData(reportType, selectedDate, studentId);
 
     if (res.error) {
       setError(res.error);
@@ -78,7 +91,7 @@ export default function ReportsPage() {
       // Header row
       const headerRowIndex = 9;
       const headerRow = worksheet.getRow(headerRowIndex);
-      headerRow.values = ["No", "Tanggal", "Kegiatan", "Keterangan", "Penilaian Perkembangan", "Gambar Foto"];
+      headerRow.values = ["No", "Tanggal", "Tema & Sub Tema", "Keterangan", "Penilaian Perkembangan", "Gambar Foto"];
       headerRow.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
       headerRow.height = 25;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,7 +131,7 @@ export default function ReportsPage() {
         }).join('\n') || "-";
 
         const row = worksheet.getRow(currentRowIndex);
-        row.values = [i + 1, dateStr, a.title, a.description || "-", progressStr, hasPhotos ? "" : "Tidak ada gambar"];
+        row.values = [i + 1, dateStr, `${a.theme}${a.sub_theme && a.sub_theme !== "-" ? `\n(${a.sub_theme})` : ""}`, a.description || "-", progressStr, hasPhotos ? "" : "Tidak ada gambar"];
         row.height = hasPhotos ? 70 : Math.max(35, (a.activity_student_progress?.length || 1) * 15);
 
         // Alignment & wrap text
@@ -184,7 +197,7 @@ export default function ReportsPage() {
   const handleDownloadCSV = () => {
     if (!reportData) return;
 
-    const headers = ["No", "Tanggal", "Kegiatan", "Keterangan", "Penilaian Perkembangan", "Gambar (URL)"];
+    const headers = ["No", "Tanggal", "Tema & Sub Tema", "Keterangan", "Penilaian Perkembangan", "Gambar (URL)"];
     const rows = reportData.activities.map((a, i) => {
       const progressStr = a.activity_student_progress?.map(p => {
         const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
@@ -194,7 +207,7 @@ export default function ReportsPage() {
       return [
         i + 1,
         `"${format(new Date(a.activity_date), "d MMMM yyyy", { locale: idLocale })}${a.activity_time ? ` ${a.activity_time.slice(0, 5)}` : ""}"`,
-        `"${a.title.replace(/"/g, '""')}"`,
+        `"${a.theme.replace(/"/g, '""')}${a.sub_theme && a.sub_theme !== "-" ? `\n(${a.sub_theme.replace(/"/g, '""')})` : ""}"`,
         `"${(a.description || "-").replace(/"/g, '""')}"`,
         `"${progressStr.replace(/"/g, '""')}"`,
         `"${(a.activity_photos?.map((p) => p.image_url).join(" ; ") || "-").replace(/"/g, '""')}"`,
@@ -210,6 +223,7 @@ export default function ReportsPage() {
         `Guru: ${reportData.teacherName}`,
         `Tahun Ajaran: ${reportData.academicYear}`,
         `Periode: ${reportData.period}`,
+        ...(reportData.studentName ? [`Siswa: ${reportData.studentName}`] : []),
         ``,
         headers.join(";"),
         ...rows.map((r) => r.join(";")),
@@ -270,15 +284,29 @@ export default function ReportsPage() {
         </div>
 
         {/* Date Selector */}
-        <div className="flex items-center gap-3 max-w-xs">
-          <Calendar className="text-emerald-400 shrink-0" size={20} />
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border-white/10 bg-white/5 text-white focus-visible:ring-emerald-500/30 [color-scheme:dark]"
-          />
-        </div>
+          <div className="flex items-center gap-3 max-w-xs">
+            <Calendar className="text-emerald-400 shrink-0" size={20} />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border-white/10 bg-white/5 text-white focus-visible:ring-emerald-500/30 [color-scheme:dark]"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3 max-w-xs">
+            <User className="text-emerald-400 shrink-0" size={20} />
+            <select
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white focus-visible:ring-emerald-500/30 outline-none transition"
+            >
+              <option value="ALL" className="text-slate-800">Semua Siswa</option>
+              {students.map(s => (
+                <option key={s.id} value={s.id} className="text-slate-800">{s.name}</option>
+              ))}
+            </select>
+          </div>
 
         {/* Generate Button */}
         <button
@@ -348,6 +376,9 @@ export default function ReportsPage() {
                 <p>Guru: <strong className="text-white print:text-black">{reportData.teacherName}</strong></p>
                 <p>Tahun Ajaran: <strong className="text-white print:text-black">{reportData.academicYear}</strong></p>
                 <p>Periode: <strong className="text-white print:text-black">{reportData.period}</strong></p>
+                {reportData.studentName && (
+                  <p>Siswa: <strong className="text-emerald-400 print:text-emerald-600">{reportData.studentName}</strong></p>
+                )}
               </div>
             </div>
 
@@ -368,7 +399,7 @@ export default function ReportsPage() {
                         Tanggal
                       </th>
                       <th className="py-3 px-3 text-left text-white/60 print:text-gray-600 font-semibold w-48">
-                        Kegiatan
+                        Tema & Sub Tema
                       </th>
                       <th className="py-3 px-3 text-left text-white/60 print:text-gray-600 font-semibold">
                         Keterangan
@@ -402,7 +433,12 @@ export default function ReportsPage() {
                           )}
                         </td>
                         <td className="py-3 px-3 font-bold text-white print:text-black align-top">
-                          {activity.title}
+                          {activity.theme}
+                          {activity.sub_theme && activity.sub_theme !== "-" && (
+                            <div className="text-xs text-emerald-400 mt-1 font-medium print:text-emerald-600">
+                              {activity.sub_theme}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-3 text-white/70 print:text-gray-700 align-top leading-relaxed">
                           {activity.description || "-"}

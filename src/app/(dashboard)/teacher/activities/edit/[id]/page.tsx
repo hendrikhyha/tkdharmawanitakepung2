@@ -28,7 +28,8 @@ export default async function EditActivityPage({ params }: EditPageProps) {
     .from("activities")
     .select(`
       id,
-      title,
+      theme,
+      sub_theme,
       description,
       activity_date,
       activity_time,

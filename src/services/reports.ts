@@ -7,7 +7,8 @@ export interface ReportPhoto {
 
 export interface ReportActivity {
   id: string;
-  title: string;
+  theme: string;
+  sub_theme: string | null;
   description: string | null;
   activity_date: string;
   activity_time: string | null;
@@ -15,7 +16,7 @@ export interface ReportActivity {
   activity_photos: ReportPhoto[];
   activity_student_progress?: Array<{
     notes: string;
-    students: { name: string } | { name: string }[];
+    students: { id: string; name: string } | { id: string; name: string }[];
   }>;
 }
 
@@ -25,12 +26,14 @@ export interface ReportData {
   academicYear: string;
   activities: ReportActivity[];
   period: string;
+  studentName?: string;
 }
 
 export async function getReportData(
   userId: string,
   type: "daily" | "weekly" | "monthly",
-  dateStr: string
+  dateStr: string,
+  studentId?: string | "ALL"
 ): Promise<ReportData | null> {
   const supabase = await createClient();
 
@@ -90,7 +93,8 @@ export async function getReportData(
     .from("activities")
     .select(`
       id,
-      title,
+      theme,
+      sub_theme,
       description,
       activity_date,
       activity_time,
@@ -102,6 +106,7 @@ export async function getReportData(
       activity_student_progress (
         notes,
         students (
+          id,
           name
         )
       )
@@ -111,6 +116,31 @@ export async function getReportData(
     .lte("activity_date", endDate)
     .order("activity_date", { ascending: true })
     .order("sort_order", { ascending: true });
+
+  let filteredActivities = (activities as unknown as ReportActivity[]) || [];
+  let studentNameTarget = undefined;
+
+  if (studentId && studentId !== "ALL") {
+    // Determine the student's name from one of the activities (or we could fetch it separately)
+    // To be safe, fetch it separately:
+    const { data: stData } = await supabase.from("students").select("name").eq("id", studentId).single();
+    if (stData) {
+      studentNameTarget = stData.name;
+    }
+
+    // Filter the activities to only include the selected student's progress
+    filteredActivities = filteredActivities.map(act => {
+      if (!act.activity_student_progress) return act;
+      const filteredProgress = act.activity_student_progress.filter(p => {
+        const sid = Array.isArray(p.students) ? p.students[0]?.id : (p.students as any)?.id;
+        return sid === studentId;
+      });
+      return {
+        ...act,
+        activity_student_progress: filteredProgress,
+      };
+    });
+  }
 
   const teacherObj = teacher as unknown as { users?: { name: string } | { name: string }[] };
   const teacherName = Array.isArray(teacherObj.users)
@@ -126,8 +156,9 @@ export async function getReportData(
     teacherName: teacherName || "Guru",
     className: classData.name,
     academicYear: academicYear || "-",
-    activities: (activities as unknown as ReportActivity[]) || [],
+    activities: filteredActivities,
     period,
+    studentName: studentNameTarget,
   };
 }
 
