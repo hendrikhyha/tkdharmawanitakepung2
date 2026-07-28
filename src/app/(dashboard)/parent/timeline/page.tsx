@@ -15,6 +15,7 @@ interface TimelineActivity {
   activity_date: string;
   activity_time: string | null;
   activity_photos: Array<{ id: string; image_url: string }>;
+  activity_student_progress?: Array<{ student_id: string; notes: string }>;
 }
 
 export default async function ParentTimelinePage() {
@@ -37,7 +38,7 @@ export default async function ParentTimelinePage() {
 
   const { data: students } = await supabase
     .from("students")
-    .select("class_id")
+    .select("id, class_id")
     .eq("parent_id", parent.id);
 
   const classIds = [...new Set((students || []).map((s) => s.class_id).filter(Boolean))] as string[];
@@ -56,6 +57,10 @@ export default async function ParentTimelinePage() {
         activity_photos (
           id,
           image_url
+        ),
+        activity_student_progress (
+          student_id,
+          notes
         )
       `)
       .in("class_id", classIds)
@@ -64,7 +69,14 @@ export default async function ParentTimelinePage() {
       .order("sort_order", { ascending: true })
       .limit(50);
 
-    activities = (data as unknown as TimelineActivity[]) || [];
+    const childrenIds = (students || []).map((s) => s.id);
+
+    activities = ((data as any) || []).map((act: any) => ({
+      ...act,
+      activity_student_progress: act.activity_student_progress?.filter((p: any) =>
+        childrenIds.includes(p.student_id)
+      ),
+    }));
   }
 
   // Group activities by date
@@ -142,6 +154,22 @@ export default async function ParentTimelinePage() {
                       <p className="mt-3 text-sm text-slate-600 leading-relaxed font-medium">
                         {activity.description}
                       </p>
+                    )}
+
+                    {/* Progress Preview */}
+                    {activity.activity_student_progress && activity.activity_student_progress.length > 0 && (
+                      <div className="mt-4 rounded-xl bg-pink-50/50 p-4 border border-pink-100">
+                        <h4 className="text-xs font-bold text-pink-600 uppercase tracking-wider mb-2">Catatan Perkembangan Anak</h4>
+                        <div className="space-y-3">
+                          {activity.activity_student_progress.map((progress, idx) => {
+                            return (
+                              <div key={idx} className="text-sm">
+                                <p className="text-slate-600 leading-relaxed bg-white rounded-lg p-3 border border-pink-50">{progress.notes}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
 
                     {/* Photo grid */}

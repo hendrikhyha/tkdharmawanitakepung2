@@ -204,6 +204,14 @@ export default function ActivitiesPage() {
                   </button>
                   
                   <Link
+                    href={`/teacher/activities/${activity.id}/progress`}
+                    className="rounded-xl border border-indigo-500/20 p-2 text-indigo-400 hover:bg-indigo-500/10 transition"
+                    title="Penilaian Perkembangan"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M8 9h2"/></svg>
+                  </Link>
+
+                  <Link
                     href={`/teacher/activities/edit/${activity.id}`}
                     className="rounded-xl border border-white/10 p-2 text-white/60 hover:bg-white/10 hover:text-white transition"
                     title="Edit Kegiatan"

@@ -16,6 +16,7 @@ export interface ParentDashboardData {
     activity_date: string;
     activity_time: string | null;
     activity_photos: Array<{ id: string; image_url: string }>;
+    activity_student_progress?: Array<{ student_id: string; notes: string }>;
   }>;
   totalPhotos: number;
 }
@@ -84,6 +85,10 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
         activity_photos (
           id,
           image_url
+        ),
+        activity_student_progress (
+          student_id,
+          notes
         )
       `)
       .in("class_id", uniqueClassIds)
@@ -92,7 +97,15 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
       .order("sort_order", { ascending: true })
       .limit(10);
 
-    recentActivities = (activities as unknown as ParentDashboardData["recentActivities"]) || [];
+    const childrenIds = children.map((c) => c.id);
+
+    // Filter progress to only include the parent's children
+    recentActivities = ((activities as any) || []).map((act: any) => ({
+      ...act,
+      activity_student_progress: act.activity_student_progress?.filter((p: any) =>
+        childrenIds.includes(p.student_id)
+      ),
+    }));
   }
 
   // 5. Count total photos

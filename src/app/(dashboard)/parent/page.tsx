@@ -150,6 +150,24 @@ export default async function ParentDashboard() {
                   )}
                 </div>
 
+                {/* Progress Preview */}
+                {activity.activity_student_progress && activity.activity_student_progress.length > 0 && (
+                  <div className="mt-4 rounded-xl bg-pink-50/50 p-4 border border-pink-100">
+                    <h4 className="text-xs font-bold text-pink-600 uppercase tracking-wider mb-2">Catatan Perkembangan Anak</h4>
+                    <div className="space-y-3">
+                      {activity.activity_student_progress.map((progress, idx) => {
+                        const childName = data.children.find(c => c.id === progress.student_id)?.name || "Anak";
+                        return (
+                          <div key={idx} className="text-sm">
+                            <span className="font-semibold text-slate-700">{childName}:</span>
+                            <p className="mt-1 text-slate-600 leading-relaxed bg-white rounded-lg p-3 border border-pink-50">{progress.notes}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Photo thumbnails */}
                 {activity.activity_photos.length > 0 && (
                   <div className="mt-4 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
