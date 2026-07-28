@@ -15,7 +15,7 @@ interface TimelineActivity {
   activity_date: string;
   activity_time: string | null;
   activity_photos: Array<{ id: string; image_url: string }>;
-  activity_student_progress?: Array<{ student_id: string; notes: string }>;
+  activity_student_progress?: Array<{ student_id: string; notes: string; photo_url?: string | null }>;
 }
 
 export default async function ParentTimelinePage() {
@@ -60,7 +60,8 @@ export default async function ParentTimelinePage() {
         ),
         activity_student_progress (
           student_id,
-          notes
+          notes,
+          photo_url
         )
       `)
       .in("class_id", classIds)
@@ -165,6 +166,12 @@ export default async function ParentTimelinePage() {
                             return (
                               <div key={idx} className="text-sm">
                                 <p className="text-slate-600 leading-relaxed bg-white rounded-lg p-3 border border-pink-50">{progress.notes}</p>
+                                {progress.photo_url && (
+                                  <div className="mt-2 aspect-video w-full max-w-[200px] rounded-xl overflow-hidden border border-slate-100 shadow-sm">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={progress.photo_url} alt="Foto Perkembangan" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

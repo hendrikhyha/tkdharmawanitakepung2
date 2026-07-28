@@ -16,7 +16,7 @@ export interface ParentDashboardData {
     activity_date: string;
     activity_time: string | null;
     activity_photos: Array<{ id: string; image_url: string }>;
-    activity_student_progress?: Array<{ student_id: string; notes: string }>;
+    activity_student_progress?: Array<{ student_id: string; notes: string; photo_url?: string | null }>;
   }>;
   totalPhotos: number;
 }
@@ -88,7 +88,8 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
         ),
         activity_student_progress (
           student_id,
-          notes
+          notes,
+          photo_url
         )
       `)
       .in("class_id", uniqueClassIds)

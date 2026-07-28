@@ -7,6 +7,7 @@ export interface StudentProgressData {
   student_id: string;
   activity_id: string;
   notes: string;
+  photo_url?: string | null;
 }
 
 export async function getStudentProgress(activityId: string) {
@@ -60,20 +61,69 @@ export async function getStudentProgress(activityId: string) {
   }
 }
 
-export async function saveStudentProgress(
-  activityId: string,
-  progressData: { student_id: string; notes: string }[]
-) {
+export async function saveStudentProgress(formData: FormData) {
   try {
     const supabase = await createClient();
+    const activityId = formData.get("activityId") as string;
+    
+    // Parse student data from formData keys
+    // Format: "notes_STUDENTID", "photo_STUDENTID"
+    const studentData: Record<string, { notes: string; photo_url?: string | null }> = {};
+    const existingPhotoUrls: Record<string, string | null> = {};
 
-    const upsertData = progressData.map((data) => ({
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith("notes_")) {
+        const studentId = key.replace("notes_", "");
+        if (!studentData[studentId]) studentData[studentId] = { notes: "" };
+        studentData[studentId].notes = value as string;
+      } else if (key.startsWith("existing_photo_")) {
+        const studentId = key.replace("existing_photo_", "");
+        existingPhotoUrls[studentId] = value as string;
+      }
+    }
+
+    // Process photo uploads
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith("photo_") && value instanceof File && value.size > 0) {
+        const studentId = key.replace("photo_", "");
+        
+        // Generate a unique path for the photo
+        const fileExt = value.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `progress/${activityId}/${studentId}/${fileName}`;
+
+        // Convert File to ArrayBuffer
+        const arrayBuffer = await value.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const { data, error: uploadError } = await supabase.storage
+          .from("activities")
+          .upload(filePath, buffer, {
+            contentType: value.type,
+            upsert: true,
+          });
+
+        if (!uploadError && data) {
+          const { data: publicUrlData } = supabase.storage
+            .from("activities")
+            .getPublicUrl(data.path);
+          
+          if (!studentData[studentId]) studentData[studentId] = { notes: "" };
+          studentData[studentId].photo_url = publicUrlData.publicUrl;
+        }
+      }
+    }
+
+    const upsertData = Object.entries(studentData).map(([student_id, data]) => ({
       activity_id: activityId,
-      student_id: data.student_id,
+      student_id,
       notes: data.notes,
+      photo_url: data.photo_url !== undefined ? data.photo_url : (existingPhotoUrls[student_id] || null),
     }));
 
-    // Upsert into activity_student_progress (relies on UNIQUE constraint for conflict resolution)
+    if (upsertData.length === 0) return { success: true };
+
+    // Upsert into activity_student_progress
     const { error } = await supabase
       .from("activity_student_progress")
       .upsert(upsertData, {

@@ -161,6 +161,12 @@ export default async function ParentDashboard() {
                           <div key={idx} className="text-sm">
                             <span className="font-semibold text-slate-700">{childName}:</span>
                             <p className="mt-1 text-slate-600 leading-relaxed bg-white rounded-lg p-3 border border-pink-50">{progress.notes}</p>
+                            {progress.photo_url && (
+                              <div className="mt-2 aspect-video w-full max-w-[200px] rounded-xl overflow-hidden border border-slate-100 shadow-sm">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={progress.photo_url} alt="Foto Perkembangan" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                              </div>
+                            )}
                           </div>
                         );
                       })}
