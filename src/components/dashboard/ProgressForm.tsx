@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getStudentProgress, saveStudentProgress } from "@/app/actions/progress";
 import { Loader2, Save, CheckCircle2, ImagePlus, X } from "lucide-react";
+import imageCompression from "browser-image-compression";
 
 interface ProgressFormProps {
   activityId: string;
@@ -65,17 +66,28 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
     setSuccess(false);
   };
 
-  const handlePhotoSelect = (studentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (studentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 2MB");
-      return;
+
+    let compressedFile = file;
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      };
+      compressedFile = await imageCompression(file, options);
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Gagal mengompres dan ukuran asli foto melebihi 2MB");
+        return;
+      }
     }
 
-    const preview = URL.createObjectURL(file);
-    setPhotoFiles((prev) => ({ ...prev, [studentId]: file }));
+    const preview = URL.createObjectURL(compressedFile);
+    setPhotoFiles((prev) => ({ ...prev, [studentId]: compressedFile }));
     setPhotoPreviews((prev) => ({ ...prev, [studentId]: preview }));
     setExistingPhotos((prev) => ({ ...prev, [studentId]: null }));
     setSuccess(false);

@@ -5,6 +5,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { uploadAvatar } from "@/app/actions/master";
 import { cn } from "@/lib/utils";
+import imageCompression from "browser-image-compression";
 
 interface AvatarUploadProps {
   value?: string | null;
@@ -28,17 +29,28 @@ export function AvatarUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran file maksimal 2MB");
-      return;
-    }
-
     setIsUploading(true);
 
     try {
+      let compressedFile = file;
+      try {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+        };
+        compressedFile = await imageCompression(file, options);
+      } catch (err) {
+        console.error("Error compressing image:", err);
+        if (file.size > 2 * 1024 * 1024) {
+          alert("Gagal mengompres dan ukuran asli foto melebihi 2MB");
+          setIsUploading(false);
+          return;
+        }
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
 
       // Generate a unique path to avoid caching issues when replacing photo
       const uniqueId = Math.random().toString(36).substring(7);

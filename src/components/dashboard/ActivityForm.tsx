@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { activitySchema, ActivityFormValues } from "@/lib/validations/activity";
 import { X, Upload, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import imageCompression from "browser-image-compression";
 
 export interface ActivityFormProps {
   initialData?: {
@@ -50,7 +51,7 @@ export default function ActivityForm({
     },
   });
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const remainingSlots = 5 - (initialData?.activity_photos.length || 0) + photosToDelete.length - newPhotoFiles.length;
 
@@ -59,14 +60,31 @@ export default function ActivityForm({
       return;
     }
 
-    const validFiles = files.filter((f) => f.size <= 5 * 1024 * 1024); // 5MB limit
-    if (validFiles.length < files.length) {
-      alert("Beberapa berkas melebihi batas ukuran 5MB dan dilewati.");
+    const compressedFiles: File[] = [];
+    
+    for (const file of files) {
+      try {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+        compressedFiles.push(compressedFile);
+      } catch (error) {
+        console.error("Error compressing image:", error);
+        // Fallback to original file if compression fails but it's under 5MB
+        if (file.size <= 5 * 1024 * 1024) {
+          compressedFiles.push(file);
+        } else {
+          alert(`Gagal mengompres dan ukuran asli file ${file.name} melebihi 5MB.`);
+        }
+      }
     }
 
-    const previews = validFiles.map((file) => URL.createObjectURL(file));
+    const previews = compressedFiles.map((file) => URL.createObjectURL(file));
 
-    setNewPhotoFiles((prev) => [...prev, ...validFiles]);
+    setNewPhotoFiles((prev) => [...prev, ...compressedFiles]);
     setNewPhotoPreviews((prev) => [...prev, ...previews]);
   };
 
