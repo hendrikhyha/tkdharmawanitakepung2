@@ -13,6 +13,10 @@ export interface ReportActivity {
   activity_time: string | null;
   status: string;
   activity_photos: ReportPhoto[];
+  activity_student_progress?: Array<{
+    notes: string;
+    students: { name: string } | { name: string }[];
+  }>;
 }
 
 export interface ReportData {
@@ -94,6 +98,12 @@ export async function getReportData(
       activity_photos (
         id,
         image_url
+      ),
+      activity_student_progress (
+        notes,
+        students (
+          name
+        )
       )
     `)
     .eq("teacher_id", teacher.id)

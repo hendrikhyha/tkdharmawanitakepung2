@@ -56,13 +56,13 @@ export default function ReportsPage() {
       const worksheet = workbook.addWorksheet("Laporan Kegiatan");
 
       // Title & Header info
-      worksheet.mergeCells("A1:E1");
+      worksheet.mergeCells("A1:F1");
       const titleCell = worksheet.getCell("A1");
       titleCell.value = `LAPORAN KEGIATAN ${reportType.toUpperCase()}`;
       titleCell.font = { bold: true, size: 16, color: { argb: "FF1E293B" } };
       titleCell.alignment = { horizontal: "center", vertical: "middle" };
 
-      worksheet.mergeCells("A2:E2");
+      worksheet.mergeCells("A2:F2");
       const subTitleCell = worksheet.getCell("A2");
       subTitleCell.value = "TK DHARMA WANITA KEPUNG 2";
       subTitleCell.font = { bold: true, size: 12, color: { argb: "FF059669" } };
@@ -78,7 +78,7 @@ export default function ReportsPage() {
       // Header row
       const headerRowIndex = 9;
       const headerRow = worksheet.getRow(headerRowIndex);
-      headerRow.values = ["No", "Tanggal", "Kegiatan", "Keterangan", "Gambar Foto"];
+      headerRow.values = ["No", "Tanggal", "Kegiatan", "Keterangan", "Penilaian Perkembangan", "Gambar Foto"];
       headerRow.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
       headerRow.height = 25;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +97,7 @@ export default function ReportsPage() {
         { key: "tanggal", width: 22 },
         { key: "kegiatan", width: 28 },
         { key: "keterangan", width: 40 },
+        { key: "penilaian", width: 45 },
         { key: "gambar", width: 36 },
       ];
 
@@ -110,16 +111,23 @@ export default function ReportsPage() {
         }`;
 
         const hasPhotos = a.activity_photos && a.activity_photos.length > 0;
+        
+        const progressStr = a.activity_student_progress?.map(p => {
+          const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
+          return `${studentName}: ${p.notes}`;
+        }).join('\n') || "-";
+
         const row = worksheet.getRow(currentRowIndex);
-        row.values = [i + 1, dateStr, a.title, a.description || "-", hasPhotos ? "" : "Tidak ada gambar"];
-        row.height = hasPhotos ? 70 : 35;
+        row.values = [i + 1, dateStr, a.title, a.description || "-", progressStr, hasPhotos ? "" : "Tidak ada gambar"];
+        row.height = hasPhotos ? 70 : Math.max(35, (a.activity_student_progress?.length || 1) * 15);
 
         // Alignment & wrap text
         row.getCell(1).alignment = { vertical: "middle", horizontal: "center" };
         row.getCell(2).alignment = { vertical: "middle", horizontal: "left", wrapText: true };
         row.getCell(3).alignment = { vertical: "middle", horizontal: "left", wrapText: true };
         row.getCell(4).alignment = { vertical: "middle", horizontal: "left", wrapText: true };
-        row.getCell(5).alignment = { vertical: "middle", horizontal: "center" };
+        row.getCell(5).alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+        row.getCell(6).alignment = { vertical: "middle", horizontal: "center" };
 
         // Embed photos into Excel cell
         if (hasPhotos) {
@@ -140,7 +148,7 @@ export default function ReportsPage() {
               });
 
               worksheet.addImage(imageId, {
-                tl: { col: 4 + photoIndex * 0.35, row: currentRowIndex - 1 + 0.1 },
+                tl: { col: 5 + photoIndex * 0.35, row: currentRowIndex - 1 + 0.1 },
                 ext: { width: 75, height: 60 },
               });
               photoIndex++;
@@ -176,14 +184,22 @@ export default function ReportsPage() {
   const handleDownloadCSV = () => {
     if (!reportData) return;
 
-    const headers = ["No", "Tanggal", "Kegiatan", "Keterangan", "Gambar (URL)"];
-    const rows = reportData.activities.map((a, i) => [
-      i + 1,
-      `"${format(new Date(a.activity_date), "d MMMM yyyy", { locale: idLocale })}${a.activity_time ? ` ${a.activity_time.slice(0, 5)}` : ""}"`,
-      `"${a.title.replace(/"/g, '""')}"`,
-      `"${(a.description || "-").replace(/"/g, '""')}"`,
-      `"${(a.activity_photos?.map((p) => p.image_url).join(" ; ") || "-").replace(/"/g, '""')}"`,
-    ]);
+    const headers = ["No", "Tanggal", "Kegiatan", "Keterangan", "Penilaian Perkembangan", "Gambar (URL)"];
+    const rows = reportData.activities.map((a, i) => {
+      const progressStr = a.activity_student_progress?.map(p => {
+        const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
+        return `${studentName}: ${p.notes}`;
+      }).join(' | ') || "-";
+
+      return [
+        i + 1,
+        `"${format(new Date(a.activity_date), "d MMMM yyyy", { locale: idLocale })}${a.activity_time ? ` ${a.activity_time.slice(0, 5)}` : ""}"`,
+        `"${a.title.replace(/"/g, '""')}"`,
+        `"${(a.description || "-").replace(/"/g, '""')}"`,
+        `"${progressStr.replace(/"/g, '""')}"`,
+        `"${(a.activity_photos?.map((p) => p.image_url).join(" ; ") || "-").replace(/"/g, '""')}"`,
+      ];
+    });
 
     const csvContent =
       "\uFEFF" +
@@ -357,6 +373,9 @@ export default function ReportsPage() {
                       <th className="py-3 px-3 text-left text-white/60 print:text-gray-600 font-semibold">
                         Keterangan
                       </th>
+                      <th className="py-3 px-3 text-left text-white/60 print:text-gray-600 font-semibold w-64">
+                        Penilaian Perkembangan
+                      </th>
                       <th className="py-3 px-3 text-left text-white/60 print:text-gray-600 font-semibold w-52">
                         Gambar
                       </th>
@@ -387,6 +406,22 @@ export default function ReportsPage() {
                         </td>
                         <td className="py-3 px-3 text-white/70 print:text-gray-700 align-top leading-relaxed">
                           {activity.description || "-"}
+                        </td>
+                        <td className="py-3 px-3 text-white/70 print:text-gray-700 align-top leading-relaxed">
+                          {activity.activity_student_progress && activity.activity_student_progress.length > 0 ? (
+                            <ul className="list-disc pl-4 space-y-1">
+                              {activity.activity_student_progress.map((p, idx) => {
+                                const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
+                                return (
+                                  <li key={idx} className="text-xs">
+                                    <span className="font-semibold">{studentName}:</span> {p.notes}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <span className="text-white/30 print:text-gray-400 italic text-xs">Belum ada penilaian</span>
+                          )}
                         </td>
                         <td className="py-3 px-3 align-top">
                           {activity.activity_photos && activity.activity_photos.length > 0 ? (
