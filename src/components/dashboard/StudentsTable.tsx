@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Search, MoreHorizontal, Edit, Trash, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStudents, StudentData } from "@/hooks/useStudents";
-import { useClasses } from "@/hooks/useClasses";
+import { useClasses, useAcademicYears } from "@/hooks/useClasses";
 import { useParents } from "@/hooks/useParents";
 import { studentSchema, StudentFormValues } from "@/lib/validations/master";
 import { createStudent, updateStudent, deleteStudent } from "@/app/actions/master";
@@ -58,6 +58,7 @@ export default function StudentsTable() {
   const { data: students, isLoading, error } = useStudents();
   const { data: classes } = useClasses();
   const { data: parents } = useParents();
+  const { data: academicYears } = useAcademicYears();
 
   const [search, setSearch] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -70,7 +71,7 @@ export default function StudentsTable() {
 
   const addForm = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { name: "", class_id: "", parent_id: "", birth_date: "" },
+    defaultValues: { name: "", class_id: "", parent_id: "", entry_academic_year_id: "", birth_date: "" },
   });
 
   const editForm = useForm<StudentFormValues>({
@@ -102,6 +103,7 @@ export default function StudentsTable() {
       name: s.name,
       class_id: s.class_id ?? "",
       parent_id: s.parent_id ?? "",
+      entry_academic_year_id: s.entry_academic_year_id ?? "",
       birth_date: s.birth_date ?? "",
     });
     setIsEditOpen(true);
@@ -170,6 +172,7 @@ export default function StudentsTable() {
             <TableRow className="border-white/10 hover:bg-transparent">
               <TableHead className="text-white/60">Nama Siswa</TableHead>
               <TableHead className="text-white/60">Kelas</TableHead>
+              <TableHead className="text-white/60">Tahun Masuk</TableHead>
               <TableHead className="text-white/60">Orang Tua</TableHead>
               <TableHead className="text-white/60">Tgl. Lahir</TableHead>
               <TableHead className="w-[80px]"></TableHead>
@@ -184,7 +187,7 @@ export default function StudentsTable() {
               </TableRow>
             ) : filteredStudents?.length === 0 ? (
               <TableRow className="border-none hover:bg-transparent">
-                <TableCell colSpan={5} className="h-32 text-center text-white/40">
+                <TableCell colSpan={6} className="h-32 text-center text-white/40">
                   Data tidak ditemukan.
                 </TableCell>
               </TableRow>
@@ -205,6 +208,7 @@ export default function StudentsTable() {
                     </div>
                   </TableCell>
                   <TableCell className="text-white/70">{s.classes?.name || "-"}</TableCell>
+                  <TableCell className="text-white/70">{s.entry_academic_year?.name || "-"}</TableCell>
                   <TableCell className="text-white/70">{s.parents?.users.name || "-"}</TableCell>
                   <TableCell className="text-white/70">{s.birth_date || "-"}</TableCell>
                   <TableCell>
@@ -282,6 +286,22 @@ export default function StudentsTable() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label className="text-white/80">Tahun Ajaran Masuk (Opsional)</Label>
+              <Select onValueChange={(val: any) => addForm.setValue("entry_academic_year_id", val === "none" ? null : val)} defaultValue="none">
+                <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
+                  <SelectValue placeholder="Pilih tahun ajaran masuk" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
+                  <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
+                  {academicYears?.map((ay) => (
+                    <SelectItem key={ay.id} value={ay.id} className="focus:bg-white/10 focus:text-white">
+                      {ay.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="birth_date" className="text-white/80">Tanggal Lahir (Opsional)</Label>
               <Input id="birth_date" type="date" {...addForm.register("birth_date")} className="border-white/10 bg-white/5 text-white focus-visible:ring-yellow-400/30 [color-scheme:dark]" />
             </div>
@@ -342,6 +362,22 @@ export default function StudentsTable() {
                   {parents?.map((p) => (
                     <SelectItem key={p.id} value={p.id} className="focus:bg-white/10 focus:text-white">
                       {p.users.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Tahun Ajaran Masuk (Opsional)</Label>
+              <Select onValueChange={(val: any) => editForm.setValue("entry_academic_year_id", val === "none" ? null : val)} defaultValue={selectedStudent?.entry_academic_year_id ?? "none"}>
+                <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
+                  <SelectValue placeholder="Pilih tahun ajaran masuk" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
+                  <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
+                  {academicYears?.map((ay) => (
+                    <SelectItem key={ay.id} value={ay.id} className="focus:bg-white/10 focus:text-white">
+                      {ay.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -10,6 +10,7 @@ export interface StudentData {
   parent_id: string | null;
   birth_date: string | null;
   photo: string | null;
+  entry_academic_year_id: string | null;
   classes: {
     name: string;
   } | null;
@@ -17,6 +18,9 @@ export interface StudentData {
     users: {
       name: string;
     };
+  } | null;
+  entry_academic_year: {
+    name: string;
   } | null;
 }
 
@@ -33,6 +37,7 @@ export function useStudents() {
           name,
           class_id,
           parent_id,
+          entry_academic_year_id,
           birth_date,
           photo,
           classes (
@@ -42,6 +47,9 @@ export function useStudents() {
             users (
               name
             )
+          ),
+          entry_academic_year:academic_years!students_entry_academic_year_id_fkey (
+            name
           )
         `)
         .order("created_at", { ascending: false });

@@ -227,6 +227,7 @@ export async function createStudent(data: StudentFormValues) {
     name: data.name,
     class_id: data.class_id || null,
     parent_id: data.parent_id || null,
+    entry_academic_year_id: data.entry_academic_year_id || null,
     birth_date: data.birth_date || null,
     photo: data.photo || null,
   });
@@ -244,6 +245,7 @@ export async function updateStudent(id: string, data: StudentFormValues) {
       name: data.name,
       class_id: data.class_id || null,
       parent_id: data.parent_id || null,
+      entry_academic_year_id: data.entry_academic_year_id || null,
       birth_date: data.birth_date || null,
       photo: data.photo || null,
     })
@@ -256,6 +258,31 @@ export async function updateStudent(id: string, data: StudentFormValues) {
 export async function deleteStudent(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("students").delete().eq("id", id);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+// ----------------------------------------------------------------------
+// ACADEMIC YEARS
+// ----------------------------------------------------------------------
+
+export async function createAcademicYear(name: string, is_active: boolean = false) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("academic_years").insert({ name, is_active });
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function updateAcademicYear(id: string, name: string, is_active: boolean = false) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("academic_years").update({ name, is_active }).eq("id", id);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function deleteAcademicYear(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("academic_years").delete().eq("id", id);
   if (error) return { error: error.message };
   return { success: true };
 }
