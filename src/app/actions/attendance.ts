@@ -31,7 +31,7 @@ async function getTeacherContext(supabase: SupabaseClient) {
 
 export type AttendanceEntry = {
   student_id: string;
-  status: "PRESENT" | "SICK" | "EXCUSED" | "ABSENT";
+  status: "PRESENT" | "SICK" | "EXCUSED" | "ABSENT" | "HOLIDAY";
   note?: string;
 };
 

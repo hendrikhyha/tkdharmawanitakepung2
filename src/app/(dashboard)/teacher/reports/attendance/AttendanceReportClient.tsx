@@ -55,11 +55,11 @@ export default function AttendanceReportClient({ classId, students }: Props) {
 
   // Process data for the table
   const processedData = useMemo(() => {
-    const report: Record<string, { present: number, sick: number, excused: number, absent: number, total: number }> = {};
+    const report: Record<string, { present: number, sick: number, excused: number, absent: number, holiday: number, total: number }> = {};
     
     // Initialize
     students.forEach(s => {
-      report[s.id] = { present: 0, sick: 0, excused: 0, absent: 0, total: 0 };
+      report[s.id] = { present: 0, sick: 0, excused: 0, absent: 0, holiday: 0, total: 0 };
     });
 
     // Populate
@@ -70,6 +70,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
         else if (r.status === "SICK") report[r.student_id].sick++;
         else if (r.status === "EXCUSED") report[r.student_id].excused++;
         else if (r.status === "ABSENT") report[r.student_id].absent++;
+        else if (r.status === "HOLIDAY") report[r.student_id].holiday++;
       }
     });
 
@@ -134,6 +135,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
                   <th className="p-4 font-medium text-center text-blue-400">Sakit</th>
                   <th className="p-4 font-medium text-center text-yellow-400">Izin</th>
                   <th className="p-4 font-medium text-center text-red-400">Alpa</th>
+                  <th className="p-4 font-medium text-center text-purple-400">Libur</th>
                   <th className="p-4 font-medium text-center">Total Hari</th>
                 </tr>
               </thead>
@@ -147,6 +149,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
                       <td className="p-4 text-center font-bold text-blue-400">{data.sick}</td>
                       <td className="p-4 text-center font-bold text-yellow-400">{data.excused}</td>
                       <td className="p-4 text-center font-bold text-red-400">{data.absent}</td>
+                      <td className="p-4 text-center font-bold text-purple-400">{data.holiday}</td>
                       <td className="p-4 text-center text-white/60 font-semibold">{data.total}</td>
                     </tr>
                   );

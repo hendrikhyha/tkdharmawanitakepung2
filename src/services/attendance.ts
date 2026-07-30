@@ -8,7 +8,7 @@ export type AttendanceRecord = {
   student_id: string;
   teacher_id: string;
   date: string;
-  status: "PRESENT" | "SICK" | "EXCUSED" | "ABSENT";
+  status: "PRESENT" | "SICK" | "EXCUSED" | "ABSENT" | "HOLIDAY";
   note: string | null;
   students?: {
     name: string;

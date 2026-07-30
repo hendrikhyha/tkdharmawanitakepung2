@@ -32,11 +32,14 @@ export default function AttendanceClient({ classId, students }: Props) {
       const data = await getAttendanceByDate(classId, selectedDate);
       const newMap: Record<string, AttendanceEntry> = {};
       
-      // Initialize with PRESENT by default if no data exists
+      const isSunday = new Date(selectedDate + "T00:00:00").getDay() === 0;
+      const hasExistingData = data.length > 0;
+
+      // Initialize with PRESENT or HOLIDAY by default if no data exists
       students.forEach(student => {
         newMap[student.id] = {
           student_id: student.id,
-          status: "PRESENT",
+          status: (!hasExistingData && isSunday) ? "HOLIDAY" : "PRESENT",
           note: "",
         };
       });
@@ -45,7 +48,7 @@ export default function AttendanceClient({ classId, students }: Props) {
       data.forEach(record => {
         newMap[record.student_id] = {
           student_id: record.student_id,
-          status: record.status,
+          status: record.status as any,
           note: record.note || "",
         };
       });
@@ -64,11 +67,21 @@ export default function AttendanceClient({ classId, students }: Props) {
     fetchAttendance(date);
   }, [date, fetchAttendance]);
 
-  const handleStatusChange = (studentId: string, status: "PRESENT" | "SICK" | "EXCUSED" | "ABSENT") => {
+  const handleStatusChange = (studentId: string, status: AttendanceEntry["status"]) => {
     setAttendanceMap(prev => ({
       ...prev,
       [studentId]: { ...prev[studentId], status }
     }));
+  };
+
+  const setAllStatus = (status: AttendanceEntry["status"]) => {
+    setAttendanceMap(prev => {
+      const newMap = { ...prev };
+      Object.keys(newMap).forEach(key => {
+        newMap[key] = { ...newMap[key], status };
+      });
+      return newMap;
+    });
   };
 
   const handleNoteChange = (studentId: string, note: string) => {
@@ -99,6 +112,7 @@ export default function AttendanceClient({ classId, students }: Props) {
     { value: "SICK", label: "Sakit", color: "bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/20" },
     { value: "EXCUSED", label: "Izin", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 hover:bg-yellow-500/20" },
     { value: "ABSENT", label: "Alpa", color: "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20" },
+    { value: "HOLIDAY", label: "Libur", color: "bg-purple-500/10 text-purple-500 border-purple-500/20 hover:bg-purple-500/20" },
   ];
 
   return (
@@ -118,15 +132,38 @@ export default function AttendanceClient({ classId, students }: Props) {
           </div>
         </div>
         
-        <button
-          onClick={handleSave}
-          disabled={isSaving || isLoading}
-          className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400 active:scale-95 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none"
-        >
-          {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          Simpan Absensi
-        </button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setAllStatus("PRESENT")}
+            disabled={isSaving || isLoading}
+            className="flex-1 sm:flex-none items-center justify-center rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/10 disabled:opacity-50"
+          >
+            Semua Hadir
+          </button>
+          <button
+            onClick={() => setAllStatus("HOLIDAY")}
+            disabled={isSaving || isLoading}
+            className="flex-1 sm:flex-none items-center justify-center rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm font-medium text-purple-400 transition hover:bg-purple-500/10 disabled:opacity-50"
+          >
+            Semua Libur
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving || isLoading}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400 active:scale-95 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            Simpan
+          </button>
+        </div>
       </div>
+
+      {new Date(date + "T00:00:00").getDay() === 0 && (
+        <div className="p-4 rounded-xl flex items-center gap-3 bg-purple-500/10 border border-purple-500/20 text-purple-400">
+          <CalendarIcon size={18} />
+          <p className="text-sm font-medium">Hari Minggu (Libur) - Sistem secara otomatis mengatur status kehadiran menjadi Libur untuk semua siswa.</p>
+        </div>
+      )}
 
       {message && (
         <div className={`p-4 rounded-xl flex items-center gap-3 ${
@@ -168,7 +205,7 @@ export default function AttendanceClient({ classId, students }: Props) {
                             return (
                               <button
                                 key={opt.value}
-                                onClick={() => handleStatusChange(student.id, opt.value as "PRESENT" | "SICK" | "EXCUSED" | "ABSENT")}
+                                onClick={() => handleStatusChange(student.id, opt.value as AttendanceEntry["status"])}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                                   isSelected 
                                     ? `${opt.color.split(" ")[0]} ${opt.color.split(" ")[1]} border-transparent ring-2 ring-offset-2 ring-offset-slate-900 ring-${opt.color.split(" ")[1].split("-")[1]}-500/50` 

@@ -46,13 +46,15 @@ export default function ParentAttendanceClient({ students }: Props) {
     sick: records.filter(r => r.status === "SICK").length,
     excused: records.filter(r => r.status === "EXCUSED").length,
     absent: records.filter(r => r.status === "ABSENT").length,
+    holiday: records.filter(r => r.status === "HOLIDAY").length,
   };
 
-  const statusMap = {
+  const statusMap: Record<string, { label: string; style: string }> = {
     "PRESENT": { label: "Hadir", style: "bg-emerald-100 text-emerald-700 border-emerald-200" },
     "SICK": { label: "Sakit", style: "bg-blue-100 text-blue-700 border-blue-200" },
     "EXCUSED": { label: "Izin", style: "bg-yellow-100 text-yellow-700 border-yellow-200" },
     "ABSENT": { label: "Alpa", style: "bg-red-100 text-red-700 border-red-200" },
+    "HOLIDAY": { label: "Libur", style: "bg-purple-100 text-purple-700 border-purple-200" },
   };
 
   return (
@@ -90,7 +92,7 @@ export default function ParentAttendanceClient({ students }: Props) {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white/80 rounded-3xl p-4 border-2 border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-emerald-500 mb-1">{summary.present}</span>
           <span className="text-xs font-bold text-emerald-700 uppercase">Hadir</span>
@@ -106,6 +108,10 @@ export default function ParentAttendanceClient({ students }: Props) {
         <div className="bg-white/80 rounded-3xl p-4 border-2 border-red-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-red-500 mb-1">{summary.absent}</span>
           <span className="text-xs font-bold text-red-700 uppercase">Alpa</span>
+        </div>
+        <div className="bg-white/80 rounded-3xl p-4 border-2 border-purple-100 shadow-sm flex flex-col items-center justify-center text-center">
+          <span className="text-3xl font-black text-purple-500 mb-1">{summary.holiday}</span>
+          <span className="text-xs font-bold text-purple-700 uppercase">Libur</span>
         </div>
       </div>
 
