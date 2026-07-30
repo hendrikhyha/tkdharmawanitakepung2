@@ -50,8 +50,9 @@ export async function getReportData(
   const { data: classData } = await supabase
     .from("classes")
     .select("id, name, academic_years(name)")
-    .eq("teacher_id", teacher.id)
-    .single();
+    .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
+    .limit(1)
+    .maybeSingle();
 
   if (!classData) return null;
 

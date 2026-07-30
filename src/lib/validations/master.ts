@@ -25,6 +25,7 @@ export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 export const classSchema = z.object({
   name: z.string().min(2, "Nama kelas minimal 2 karakter"),
   teacher_id: z.string().uuid("Pilih guru").optional().nullable(),
+  assistant_teacher_id: z.string().uuid("Pilih guru pendamping").optional().nullable(),
   academic_year_id: z.string().uuid("Pilih tahun ajaran").optional().nullable(),
 });
 

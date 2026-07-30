@@ -35,8 +35,9 @@ export async function getTeacherDashboardStats(userId: string): Promise<TeacherD
   const { data: classData } = await supabase
     .from("classes")
     .select("id, name")
-    .eq("teacher_id", teacherId)
-    .single();
+    .or(`teacher_id.eq.${teacherId},assistant_teacher_id.eq.${teacherId}`)
+    .limit(1)
+    .maybeSingle();
 
   let studentCount = 0;
   if (classData) {
@@ -50,27 +51,26 @@ export async function getTeacherDashboardStats(userId: string): Promise<TeacherD
   // 3. Get Activities Stats
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-  // Total activities
-  const { count: totalActivities } = await supabase
-    .from("activities")
-    .select("*", { count: "exact", head: true })
-    .eq("teacher_id", teacherId);
+  // Total activities for class or teacher
+  let totalActivitiesQuery = supabase.from("activities").select("*", { count: "exact", head: true });
+  let todayActivitiesCountQuery = supabase.from("activities").select("*", { count: "exact", head: true }).eq("activity_date", today);
+  let todayActivitiesListQuery = supabase.from("activities").select("id, title, activity_time, status").eq("activity_date", today);
 
-  // Today activities count
-  const { count: todayActivitiesCount } = await supabase
-    .from("activities")
-    .select("*", { count: "exact", head: true })
-    .eq("teacher_id", teacherId)
-    .eq("activity_date", today);
+  if (classData) {
+    totalActivitiesQuery = totalActivitiesQuery.eq("class_id", classData.id);
+    todayActivitiesCountQuery = todayActivitiesCountQuery.eq("class_id", classData.id);
+    todayActivitiesListQuery = todayActivitiesListQuery.eq("class_id", classData.id);
+  } else {
+    totalActivitiesQuery = totalActivitiesQuery.eq("teacher_id", teacherId);
+    todayActivitiesCountQuery = todayActivitiesCountQuery.eq("teacher_id", teacherId);
+    todayActivitiesListQuery = todayActivitiesListQuery.eq("teacher_id", teacherId);
+  }
 
-  // Today's activities list
-  const { data: todayActivities } = await supabase
-    .from("activities")
-    .select("id, title, activity_time, status")
-    .eq("teacher_id", teacherId)
-    .eq("activity_date", today)
-    .order("activity_time", { ascending: true })
-    .limit(5);
+  const [{ count: totalActivities }, { count: todayActivitiesCount }, { data: todayActivities }] = await Promise.all([
+    totalActivitiesQuery,
+    todayActivitiesCountQuery,
+    todayActivitiesListQuery.order("activity_time", { ascending: true }).limit(5),
+  ]);
 
   return {
     classInfo: classData ? { ...classData, studentCount } : null,

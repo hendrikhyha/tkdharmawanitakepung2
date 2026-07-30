@@ -21,9 +21,9 @@ async function getTeacherContext(supabase: SupabaseClient) {
   const { data: classData, error: classError } = await supabase
     .from("classes")
     .select("id")
-    .eq("teacher_id", teacher.id)
+    .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (classError || !classData) throw new Error("No class assigned to this teacher");
 
@@ -110,7 +110,7 @@ export async function createActivity(formData: FormData) {
 export async function updateActivity(activityId: string, formData: FormData) {
   try {
     const supabase = await createClient();
-    const { teacherId } = await getTeacherContext(supabase);
+    const { teacherId, classId } = await getTeacherContext(supabase);
 
     const theme = formData.get("theme") as string;
     const sub_theme = formData.get("sub_theme") as string || null;
@@ -139,15 +139,13 @@ export async function updateActivity(activityId: string, formData: FormData) {
         status,
       })
       .eq("id", activityId)
-      .eq("teacher_id", teacherId); // Security check: must own
+      .eq("class_id", classId); // Security check: belongs to teacher's class
 
     if (updateError) return { error: updateError.message };
 
     // 2. Delete selected photos
     if (photosToDelete.length > 0) {
       for (const url of photosToDelete) {
-        // Extract filepath from public URL
-        // Example URL: .../storage/v1/object/public/activities/teacherId/activityId/file.png
         const pathPart = url.split("/public/activities/")[1];
         if (pathPart) {
           await deleteActivityPhoto(pathPart);
@@ -185,7 +183,7 @@ export async function updateActivity(activityId: string, formData: FormData) {
 export async function deleteActivity(activityId: string) {
   try {
     const supabase = await createClient();
-    const { teacherId } = await getTeacherContext(supabase);
+    const { classId } = await getTeacherContext(supabase);
 
     // 1. Get associated photos
     const { data: photos } = await supabase
@@ -208,7 +206,7 @@ export async function deleteActivity(activityId: string) {
       .from("activities")
       .delete()
       .eq("id", activityId)
-      .eq("teacher_id", teacherId);
+      .eq("class_id", classId);
 
     if (error) return { error: error.message };
 
@@ -222,7 +220,7 @@ export async function deleteActivity(activityId: string) {
 export async function reorderActivities(orderedIds: string[]) {
   try {
     const supabase = await createClient();
-    const { teacherId } = await getTeacherContext(supabase);
+    const { classId } = await getTeacherContext(supabase);
 
     // Bulk update sort order
     for (let i = 0; i < orderedIds.length; i++) {
@@ -231,7 +229,7 @@ export async function reorderActivities(orderedIds: string[]) {
         .from("activities")
         .update({ sort_order: i })
         .eq("id", id)
-        .eq("teacher_id", teacherId);
+        .eq("class_id", classId);
     }
 
     revalidatePath("/teacher/activities");
@@ -244,13 +242,13 @@ export async function reorderActivities(orderedIds: string[]) {
 export async function publishActivity(activityId: string, status: "DRAFT" | "PUBLISHED") {
   try {
     const supabase = await createClient();
-    const { teacherId } = await getTeacherContext(supabase);
+    const { classId } = await getTeacherContext(supabase);
 
     const { error } = await supabase
       .from("activities")
       .update({ status })
       .eq("id", activityId)
-      .eq("teacher_id", teacherId);
+      .eq("class_id", classId);
 
     if (error) return { error: error.message };
 

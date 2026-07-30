@@ -20,9 +20,9 @@ async function getTeacherContext(supabase: SupabaseClient) {
   const { data: classData, error: classError } = await supabase
     .from("classes")
     .select("id")
-    .eq("teacher_id", teacher.id)
+    .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (classError || !classData) throw new Error("No class assigned to this teacher");
 

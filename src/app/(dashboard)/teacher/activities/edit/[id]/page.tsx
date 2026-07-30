@@ -23,6 +23,16 @@ export default async function EditActivityPage({ params }: EditPageProps) {
 
   if (!teacher) redirect("/teacher");
 
+  // Get teacher's class
+  const { data: classData } = await supabase
+    .from("classes")
+    .select("id")
+    .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
+    .limit(1)
+    .maybeSingle();
+
+  if (!classData) redirect("/teacher");
+
   // Fetch activity
   const { data: activity, error } = await supabase
     .from("activities")
@@ -40,7 +50,7 @@ export default async function EditActivityPage({ params }: EditPageProps) {
       )
     `)
     .eq("id", id)
-    .eq("teacher_id", teacher.id)
+    .eq("class_id", classData.id)
     .single();
 
   if (error || !activity) {

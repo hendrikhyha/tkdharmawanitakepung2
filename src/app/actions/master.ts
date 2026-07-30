@@ -186,6 +186,7 @@ export async function createClass(data: ClassFormValues) {
   const { error } = await supabase.from("classes").insert({
     name: data.name,
     teacher_id: data.teacher_id || null,
+    assistant_teacher_id: data.assistant_teacher_id || null,
     academic_year_id: data.academic_year_id || null,
   });
 
@@ -201,6 +202,7 @@ export async function updateClass(id: string, data: ClassFormValues) {
     .update({
       name: data.name,
       teacher_id: data.teacher_id || null,
+      assistant_teacher_id: data.assistant_teacher_id || null,
       academic_year_id: data.academic_year_id || null,
     })
     .eq("id", id);

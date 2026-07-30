@@ -39,7 +39,17 @@ export function useActivities(date: string) {
 
       if (!teacher) throw new Error("Teacher profile not found");
 
-      // Get activities for this teacher on this date
+      // Get teacher's class (either as Wali Kelas or Guru Pendamping)
+      const { data: classData } = await supabase
+        .from("classes")
+        .select("id")
+        .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!classData) return [];
+
+      // Get activities for this class on this date
       const { data, error } = await supabase
         .from("activities")
         .select(`
@@ -56,7 +66,7 @@ export function useActivities(date: string) {
             image_url
           )
         `)
-        .eq("teacher_id", teacher.id)
+        .eq("class_id", classData.id)
         .eq("activity_date", date)
         .order("sort_order", { ascending: true });
 

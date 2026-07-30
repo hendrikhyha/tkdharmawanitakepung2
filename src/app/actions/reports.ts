@@ -41,8 +41,9 @@ export async function fetchTeacherStudents(): Promise<{ data?: { id: string, nam
     const { data: classData } = await supabase
       .from("classes")
       .select("id")
-      .eq("teacher_id", teacher.id)
-      .single();
+      .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
+      .limit(1)
+      .maybeSingle();
 
     if (!classData) return { error: "Class not found" };
 

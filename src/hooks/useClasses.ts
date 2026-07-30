@@ -7,8 +7,19 @@ export interface ClassData {
   id: string;
   name: string;
   teacher_id: string | null;
+  assistant_teacher_id: string | null;
   academic_year_id: string | null;
-  teachers: {
+  teacher: {
+    users: {
+      name: string;
+    };
+  } | null;
+  assistant_teacher: {
+    users: {
+      name: string;
+    };
+  } | null;
+  teachers?: {
     users: {
       name: string;
     };
@@ -30,8 +41,14 @@ export function useClasses() {
           id,
           name,
           teacher_id,
+          assistant_teacher_id,
           academic_year_id,
-          teachers (
+          teacher:teachers!classes_teacher_id_fkey (
+            users (
+              name
+            )
+          ),
+          assistant_teacher:teachers!classes_assistant_teacher_id_fkey (
             users (
               name
             )

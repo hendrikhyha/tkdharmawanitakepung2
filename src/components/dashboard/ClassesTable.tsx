@@ -68,7 +68,7 @@ export default function ClassesTable() {
 
   const addForm = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
-    defaultValues: { name: "", teacher_id: "", academic_year_id: "" },
+    defaultValues: { name: "", teacher_id: "", assistant_teacher_id: "", academic_year_id: "" },
   });
 
   const editForm = useForm<ClassFormValues>({
@@ -99,6 +99,7 @@ export default function ClassesTable() {
     editForm.reset({
       name: c.name,
       teacher_id: c.teacher_id ?? "",
+      assistant_teacher_id: c.assistant_teacher_id ?? "",
       academic_year_id: c.academic_year_id ?? "",
     });
     setIsEditOpen(true);
@@ -167,6 +168,7 @@ export default function ClassesTable() {
             <TableRow className="border-white/10 hover:bg-transparent">
               <TableHead className="text-white/60">Nama Kelas</TableHead>
               <TableHead className="text-white/60">Wali Kelas</TableHead>
+              <TableHead className="text-white/60">Guru Pendamping</TableHead>
               <TableHead className="text-white/60">Tahun Ajaran</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
@@ -174,13 +176,13 @@ export default function ClassesTable() {
           <TableBody>
             {isLoading ? (
               <TableRow className="border-none hover:bg-transparent">
-                <TableCell colSpan={4} className="h-32 text-center">
+                <TableCell colSpan={5} className="h-32 text-center">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin text-white/40" />
                 </TableCell>
               </TableRow>
             ) : filteredClasses?.length === 0 ? (
               <TableRow className="border-none hover:bg-transparent">
-                <TableCell colSpan={4} className="h-32 text-center text-white/40">
+                <TableCell colSpan={5} className="h-32 text-center text-white/40">
                   Data tidak ditemukan.
                 </TableCell>
               </TableRow>
@@ -188,7 +190,8 @@ export default function ClassesTable() {
               filteredClasses?.map((c) => (
                 <TableRow key={c.id} className="border-white/10 hover:bg-white/5 transition-colors">
                   <TableCell className="font-medium text-white">{c.name}</TableCell>
-                  <TableCell className="text-white/70">{c.teachers?.users.name || "-"}</TableCell>
+                  <TableCell className="text-white/70">{c.teacher?.users.name || c.teachers?.users.name || "-"}</TableCell>
+                  <TableCell className="text-white/70">{c.assistant_teacher?.users.name || "-"}</TableCell>
                   <TableCell className="text-white/70">{c.academic_years?.name || "-"}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -228,7 +231,23 @@ export default function ClassesTable() {
               <Label className="text-white/80">Wali Kelas</Label>
               <Select onValueChange={(val: any) => addForm.setValue("teacher_id", val === "none" ? null : val)} defaultValue="none">
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
-                  <SelectValue placeholder="Pilih guru" />
+                  <SelectValue placeholder="Pilih wali kelas" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
+                  <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
+                  {teachers?.map((t) => (
+                    <SelectItem key={t.id} value={t.id} className="focus:bg-white/10 focus:text-white">
+                      {t.users.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Guru Pendamping</Label>
+              <Select onValueChange={(val: any) => addForm.setValue("assistant_teacher_id", val === "none" ? null : val)} defaultValue="none">
+                <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
+                  <SelectValue placeholder="Pilih guru pendamping" />
                 </SelectTrigger>
                 <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
                   <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
@@ -282,7 +301,23 @@ export default function ClassesTable() {
               <Label className="text-white/80">Wali Kelas</Label>
               <Select onValueChange={(val: any) => editForm.setValue("teacher_id", val === "none" ? null : val)} defaultValue={selectedClass?.teacher_id ?? "none"}>
                 <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
-                  <SelectValue placeholder="Pilih guru" />
+                  <SelectValue placeholder="Pilih wali kelas" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
+                  <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
+                  {teachers?.map((t) => (
+                    <SelectItem key={t.id} value={t.id} className="focus:bg-white/10 focus:text-white">
+                      {t.users.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Guru Pendamping</Label>
+              <Select onValueChange={(val: any) => editForm.setValue("assistant_teacher_id", val === "none" ? null : val)} defaultValue={selectedClass?.assistant_teacher_id ?? "none"}>
+                <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
+                  <SelectValue placeholder="Pilih guru pendamping" />
                 </SelectTrigger>
                 <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
                   <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>

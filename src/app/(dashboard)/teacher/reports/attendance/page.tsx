@@ -27,8 +27,9 @@ export default async function AttendanceReportPage() {
   const { data: classData } = await supabase
     .from("classes")
     .select("id, name")
-    .eq("teacher_id", teacher.id)
-    .single();
+    .or(`teacher_id.eq.${teacher.id},assistant_teacher_id.eq.${teacher.id}`)
+    .limit(1)
+    .maybeSingle();
 
   if (!classData) {
     return <div className="p-8 text-white">Anda belum ditugaskan ke kelas manapun.</div>;
