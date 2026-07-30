@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon, FileSpreadsheet, Download, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAttendanceReport, AttendanceRecord } from "@/services/attendance";
@@ -77,6 +77,121 @@ export default function AttendanceReportClient({ classId, students }: Props) {
     return report;
   }, [records, students]);
 
+  const handleExportExcel = async () => {
+    setIsLoading(true);
+    try {
+      const ExcelJS = await import("exceljs");
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Laporan Absensi");
+
+      // Title & Header info
+      worksheet.mergeCells("A1:H1");
+      const titleCell = worksheet.getCell("A1");
+      titleCell.value = `REKAPITULASI ABSENSI`;
+      titleCell.font = { bold: true, size: 16, color: { argb: "FF1E293B" } };
+      titleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+      worksheet.addRow([]);
+      worksheet.addRow(["Periode:", `${startDate} s/d ${endDate}`]);
+      worksheet.addRow([]);
+
+      // Header row
+      const headerRowIndex = 5;
+      const headerRow = worksheet.getRow(headerRowIndex);
+      headerRow.values = ["No", "Nama Siswa", "Hadir", "Sakit", "Izin", "Alpa", "Libur", "Total Hari"];
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      headerRow.eachCell((cell: any) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF059669" },
+        };
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+      });
+
+      worksheet.columns = [
+        { key: "no", width: 6 },
+        { key: "nama", width: 30 },
+        { key: "hadir", width: 10 },
+        { key: "sakit", width: 10 },
+        { key: "izin", width: 10 },
+        { key: "alpa", width: 10 },
+        { key: "libur", width: 10 },
+        { key: "total", width: 12 },
+      ];
+
+      // Rows
+      let currentRowIndex = 6;
+      students.forEach((student, i) => {
+        const data = processedData[student.id];
+        const row = worksheet.getRow(currentRowIndex);
+        row.values = [i + 1, student.name, data.present, data.sick, data.excused, data.absent, data.holiday, data.total];
+        row.getCell(1).alignment = { horizontal: "center" };
+        row.getCell(3).alignment = { horizontal: "center" };
+        row.getCell(4).alignment = { horizontal: "center" };
+        row.getCell(5).alignment = { horizontal: "center" };
+        row.getCell(6).alignment = { horizontal: "center" };
+        row.getCell(7).alignment = { horizontal: "center" };
+        row.getCell(8).alignment = { horizontal: "center" };
+        currentRowIndex++;
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Rekap_Absensi_${startDate}_${endDate}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      handleDownloadCSV();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadCSV = () => {
+    const headers = ["No", "Nama Siswa", "Hadir", "Sakit", "Izin", "Alpa", "Libur", "Total Hari"];
+    const rows = students.map((s, i) => {
+      const data = processedData[s.id];
+      return [
+        i + 1,
+        `"${s.name}"`,
+        data.present,
+        data.sick,
+        data.excused,
+        data.absent,
+        data.holiday,
+        data.total
+      ];
+    });
+
+    const csvContent = "\uFEFF" + [
+      `REKAPITULASI ABSENSI`,
+      `Periode: ${startDate} s/d ${endDate}`,
+      ``,
+      headers.join(";"),
+      ...rows.map(r => r.join(";"))
+    ].join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Rekap_Absensi_${startDate}_${endDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end justify-between bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
@@ -119,7 +234,43 @@ export default function AttendanceReportClient({ classId, students }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
+      {/* Action Bar */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={handleExportExcel}
+          disabled={isLoading || students.length === 0}
+          className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition shadow-sm disabled:opacity-50"
+        >
+          <FileSpreadsheet size={18} />
+          Ekspor Excel (.xlsx)
+        </button>
+        <button
+          onClick={handleDownloadCSV}
+          disabled={isLoading || students.length === 0}
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 transition disabled:opacity-50"
+        >
+          <Download size={16} />
+          Unduh CSV
+        </button>
+        <button
+          onClick={handlePrint}
+          disabled={isLoading || students.length === 0}
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 transition disabled:opacity-50"
+        >
+          <Printer size={16} />
+          Cetak / PDF
+        </button>
+      </div>
+
+      <div id="printable-report" className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden print:bg-white print:text-black print:border-gray-200 print:rounded-none print:shadow-none">
+        
+        {/* Print Header */}
+        <div className="hidden print:block text-center p-6 pb-4">
+          <h2 className="text-xl font-bold text-black">REKAPITULASI ABSENSI</h2>
+          <h3 className="text-lg font-semibold text-gray-700 mt-1">TK Dharma Wanita Kepung 2</h3>
+          <p className="mt-2 text-sm text-gray-500">Periode: {startDate} s/d {endDate}</p>
+        </div>
+
         {isLoading ? (
           <div className="p-12 flex justify-center items-center flex-col gap-3">
             <Loader2 className="animate-spin text-white/40 h-8 w-8" />
@@ -128,29 +279,29 @@ export default function AttendanceReportClient({ classId, students }: Props) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 bg-white/5 text-white/60">
+              <thead className="border-b border-white/10 bg-white/5 text-white/60 print:bg-gray-100 print:text-gray-700">
                 <tr>
-                  <th className="p-4 font-medium">Nama Siswa</th>
-                  <th className="p-4 font-medium text-center text-emerald-400">Hadir</th>
-                  <th className="p-4 font-medium text-center text-blue-400">Sakit</th>
-                  <th className="p-4 font-medium text-center text-yellow-400">Izin</th>
-                  <th className="p-4 font-medium text-center text-red-400">Alpa</th>
-                  <th className="p-4 font-medium text-center text-purple-400">Libur</th>
-                  <th className="p-4 font-medium text-center">Total Hari</th>
+                  <th className="p-4 font-medium print:border-b print:border-gray-300">Nama Siswa</th>
+                  <th className="p-4 font-medium text-center text-emerald-400 print:text-emerald-700 print:border-b print:border-gray-300">Hadir</th>
+                  <th className="p-4 font-medium text-center text-blue-400 print:text-blue-700 print:border-b print:border-gray-300">Sakit</th>
+                  <th className="p-4 font-medium text-center text-yellow-400 print:text-yellow-700 print:border-b print:border-gray-300">Izin</th>
+                  <th className="p-4 font-medium text-center text-red-400 print:text-red-700 print:border-b print:border-gray-300">Alpa</th>
+                  <th className="p-4 font-medium text-center text-purple-400 print:text-purple-700 print:border-b print:border-gray-300">Libur</th>
+                  <th className="p-4 font-medium text-center print:border-b print:border-gray-300">Total Hari</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/5 print:divide-gray-200">
                 {students.map((student) => {
                   const data = processedData[student.id];
                   return (
-                    <tr key={student.id} className="hover:bg-white/5 transition-colors">
-                      <td className="p-4 font-medium text-white">{student.name}</td>
-                      <td className="p-4 text-center font-bold text-emerald-400">{data.present}</td>
-                      <td className="p-4 text-center font-bold text-blue-400">{data.sick}</td>
-                      <td className="p-4 text-center font-bold text-yellow-400">{data.excused}</td>
-                      <td className="p-4 text-center font-bold text-red-400">{data.absent}</td>
-                      <td className="p-4 text-center font-bold text-purple-400">{data.holiday}</td>
-                      <td className="p-4 text-center text-white/60 font-semibold">{data.total}</td>
+                    <tr key={student.id} className="hover:bg-white/5 transition-colors print:hover:bg-transparent">
+                      <td className="p-4 font-medium text-white print:text-black">{student.name}</td>
+                      <td className="p-4 text-center font-bold text-emerald-400 print:text-emerald-700">{data.present}</td>
+                      <td className="p-4 text-center font-bold text-blue-400 print:text-blue-700">{data.sick}</td>
+                      <td className="p-4 text-center font-bold text-yellow-400 print:text-yellow-700">{data.excused}</td>
+                      <td className="p-4 text-center font-bold text-red-400 print:text-red-700">{data.absent}</td>
+                      <td className="p-4 text-center font-bold text-purple-400 print:text-purple-700">{data.holiday}</td>
+                      <td className="p-4 text-center text-white/60 font-semibold print:text-gray-600">{data.total}</td>
                     </tr>
                   );
                 })}
