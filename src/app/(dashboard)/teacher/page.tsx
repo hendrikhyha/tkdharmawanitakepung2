@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { getTeacherDashboardStats } from "@/services/teacher";
 import StatCard from "@/components/dashboard/StatCard";
+import AnnouncementCarousel from "@/components/dashboard/AnnouncementCarousel";
 import { ClipboardList, Clock, Plus, Baby } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -50,6 +51,8 @@ export default async function TeacherDashboard() {
           Buat Jurnal Kegiatan
         </Link>
       </div>
+
+      <AnnouncementCarousel />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard

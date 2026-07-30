@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { getParentDashboardData } from "@/services/parent";
 import StatCard from "@/components/dashboard/StatCard";
+import AnnouncementCarousel from "@/components/dashboard/AnnouncementCarousel";
 import { Baby, Clock, Image as ImageIcon, Sun, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -47,6 +48,8 @@ export default async function ParentDashboard() {
         </p>
       </div>
 
+      <AnnouncementCarousel />
+
       {/* Children Info Cards */}
       {data.children.length > 0 && (
         <div className="space-y-3">
@@ -57,9 +60,9 @@ export default async function ParentDashboard() {
             {data.children.map((child) => (
               <div
                 key={child.id}
-                className="group flex items-center gap-4 rounded-3xl border border-white/60 bg-white/60 p-5 backdrop-blur-md shadow-sm transition hover:shadow-md hover:bg-white"
+                className="group flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-1"
               >
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-400 to-rose-400 text-xl font-bold text-white shadow-inner shadow-pink-200 group-hover:scale-110 transition-transform">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-xl font-bold text-white shadow-inner group-hover:scale-110 transition-transform">
                   {child.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -101,19 +104,19 @@ export default async function ParentDashboard() {
       </div>
 
       {/* Recent Activities Preview */}
-      <div className="rounded-3xl border border-white/60 bg-white/60 p-6 sm:p-8 backdrop-blur-md shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 sm:p-8 shadow-sm">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-extrabold text-slate-800">Kegiatan Terbaru</h2>
           <Link
             href="/parent/timeline"
-            className="text-sm font-bold text-pink-500 hover:text-pink-600 bg-pink-50 px-4 py-2 rounded-xl transition"
+            className="text-sm font-bold text-indigo-500 hover:text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl transition"
           >
             Lihat Semua
           </Link>
         </div>
 
         {data.recentActivities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-12">
             <Clock className="mb-3 h-12 w-12 text-slate-300" />
             <p className="text-sm font-bold text-slate-500">
               Belum ada kegiatan yang diterbitkan

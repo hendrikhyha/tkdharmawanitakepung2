@@ -14,7 +14,7 @@ export default function ParentShell({ children, user }: ParentShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 via-white to-sky-100 font-sans">
+    <div className="flex h-screen bg-slate-50 font-sans">
       <ParentSidebar
         user={user}
         isOpen={isSidebarOpen}
@@ -22,9 +22,6 @@ export default function ParentShell({ children, user }: ParentShellProps) {
       />
 
       <div className="flex flex-1 flex-col overflow-hidden relative">
-        {/* Decorative background elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-yellow-200/40 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-pink-200/40 rounded-full blur-3xl pointer-events-none" />
         
         {/* Mobile Top Bar */}
         <header className="flex h-16 items-center justify-between border-b border-slate-200/50 bg-white/50 backdrop-blur-md px-4 lg:hidden z-10">

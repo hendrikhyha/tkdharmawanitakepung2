@@ -11,6 +11,7 @@ import {
   BookOpenCheck,
   FileText,
   FileSpreadsheet,
+  Megaphone,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/LogoutButton";
 import { UserProfile } from "@/types/user";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/teacher/attendance", label: "Absensi", icon: BookOpenCheck },
   { href: "/teacher/reports", label: "Laporan Kegiatan", icon: FileText, exact: true },
   { href: "/teacher/reports/attendance", label: "Laporan Absensi", icon: FileSpreadsheet },
+  { href: "/teacher/announcements", label: "Pengumuman", icon: Megaphone },
   { href: "/teacher/students", label: "Siswa", icon: Baby },
   { href: "/teacher/profile", label: "Profil", icon: User },
 ];
