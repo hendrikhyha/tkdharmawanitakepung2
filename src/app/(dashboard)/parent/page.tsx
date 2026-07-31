@@ -151,9 +151,9 @@ export default async function ParentDashboard() {
                       </p>
                     )}
                   </div>
-                  {activity.activity_photos.length > 0 && (
+                  {(activity.activity_photos?.length ?? 0) > 0 && (
                     <span className="ml-3 shrink-0 text-xs font-bold text-blue-600 bg-blue-50 rounded-xl px-3 py-1.5">
-                      {activity.activity_photos.length} foto
+                      {activity.activity_photos?.length} foto
                     </span>
                   )}
                 </div>
@@ -183,9 +183,9 @@ export default async function ParentDashboard() {
                 )}
 
                 {/* Photo thumbnails */}
-                {activity.activity_photos.length > 0 && (
+                {(activity.activity_photos?.length ?? 0) > 0 && (
                   <div className="mt-4 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                    {activity.activity_photos.slice(0, 3).map((photo) => (
+                    {(activity.activity_photos || []).slice(0, 3).map((photo) => (
                       <div
                         key={photo.id}
                         className="shrink-0 h-20 w-28 rounded-xl overflow-hidden border border-slate-100 shadow-sm"
@@ -198,9 +198,9 @@ export default async function ParentDashboard() {
                         />
                       </div>
                     ))}
-                    {activity.activity_photos.length > 3 && (
+                    {(activity.activity_photos?.length ?? 0) > 3 && (
                       <div className="shrink-0 h-20 w-28 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-500">
-                        +{activity.activity_photos.length - 3} lagi
+                        +{(activity.activity_photos?.length ?? 0) - 3} lagi
                       </div>
                     )}
                   </div>
