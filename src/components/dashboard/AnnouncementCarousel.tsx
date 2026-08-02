@@ -4,11 +4,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useQuery } from '@tanstack/react-query';
-import { announcementsQueryOptions } from '@/services/announcements';
+import { announcementsQueryOptions, Announcement } from '@/services/announcements';
 import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react';
 
-export default function AnnouncementCarousel() {
-  const { data: announcements, isLoading } = useQuery(announcementsQueryOptions());
+export default function AnnouncementCarousel({ initialData }: { initialData?: Announcement[] }) {
+  const { data: announcements, isLoading } = useQuery({
+    ...announcementsQueryOptions(),
+    initialData,
+  });
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 6000, stopOnInteraction: true })

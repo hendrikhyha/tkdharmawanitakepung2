@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getParentDashboardData } from "@/services/parent";
 import StatCard from "@/components/dashboard/StatCard";
 import AnnouncementCarousel from "@/components/dashboard/AnnouncementCarousel";
+import { getAnnouncements } from "@/app/actions/announcements";
 import { Baby, Clock, Image as ImageIcon, Sun, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -20,7 +21,11 @@ export default async function ParentDashboard() {
 
   if (!user) redirect("/login");
 
-  const data = await getParentDashboardData(user.id);
+  const [data, announcementsRes] = await Promise.all([
+    getParentDashboardData(user.id),
+    getAnnouncements(),
+  ]);
+  const announcements = announcementsRes?.data || [];
 
   if (!data) {
     return (
@@ -48,7 +53,7 @@ export default async function ParentDashboard() {
         </p>
       </div>
 
-      <AnnouncementCarousel />
+      <AnnouncementCarousel initialData={announcements} />
 
       {/* Children Info Cards */}
       {data.children.length > 0 && (

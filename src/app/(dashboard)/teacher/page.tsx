@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getTeacherDashboardStats } from "@/services/teacher";
 import StatCard from "@/components/dashboard/StatCard";
 import AnnouncementCarousel from "@/components/dashboard/AnnouncementCarousel";
+import { getAnnouncements } from "@/app/actions/announcements";
 import { ClipboardList, Clock, Plus, Baby } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -22,7 +23,11 @@ export default async function TeacherDashboard() {
     redirect("/login");
   }
 
-  const stats = await getTeacherDashboardStats(user.id);
+  const [stats, announcementsRes] = await Promise.all([
+    getTeacherDashboardStats(user.id),
+    getAnnouncements(),
+  ]);
+  const announcements = announcementsRes?.data || [];
 
   if (!stats) {
     return (
@@ -52,7 +57,7 @@ export default async function TeacherDashboard() {
         </Link>
       </div>
 
-      <AnnouncementCarousel />
+      <AnnouncementCarousel initialData={announcements} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard

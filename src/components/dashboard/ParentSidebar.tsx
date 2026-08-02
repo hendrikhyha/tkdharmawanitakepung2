@@ -53,7 +53,7 @@ export default function ParentSidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 w-72 transform flex-col border-r border-slate-200/50 bg-white/90 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex shadow-sm",
+          "fixed inset-y-0 left-0 z-30 w-72 h-full max-h-screen transform flex-col border-r border-slate-200/80 bg-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex shadow-sm",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -143,7 +143,7 @@ export default function ParentSidebar({
               </span>
             </div>
           </div>
-          <LogoutButton className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50" />
+          <LogoutButton className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 shadow-sm transition-all disabled:opacity-50" />
         </div>
       </aside>
     </>

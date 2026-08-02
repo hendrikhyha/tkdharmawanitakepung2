@@ -60,14 +60,14 @@ export default function ParentAttendanceClient({ students }: Props) {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white/60 p-5 rounded-3xl border-2 border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md flex flex-wrap items-center gap-4">
+      <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-4">
         {students.length > 1 && (
           <div className="space-y-1 w-full sm:w-auto">
-            <label className="text-xs font-bold text-[#748E63] uppercase tracking-wider ml-1">Pilih Anak</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Pilih Anak</label>
             <select
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
-              className="w-full sm:w-48 h-10 px-3 rounded-2xl border-2 border-[#E5E7EB] bg-white text-slate-700 text-sm font-medium focus:border-[#FFB6C1] focus:ring-0 outline-none transition-colors"
+              className="w-full sm:w-48 h-10 px-3 rounded-2xl border border-slate-200 bg-white text-slate-700 text-sm font-medium focus:border-indigo-300 focus:ring-0 outline-none transition-colors"
             >
               {students.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -77,7 +77,7 @@ export default function ParentAttendanceClient({ students }: Props) {
         )}
         
         <div className="space-y-1 flex-1 min-w-[140px]">
-          <label className="text-xs font-bold text-[#748E63] uppercase tracking-wider ml-1">Bulan</label>
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Bulan</label>
           <input
             type="month"
             value={startDate.slice(0, 7)}
@@ -86,45 +86,45 @@ export default function ParentAttendanceClient({ students }: Props) {
               setStartDate(format(startOfMonth(date), "yyyy-MM-dd"));
               setEndDate(format(endOfMonth(date), "yyyy-MM-dd"));
             }}
-            className="w-full h-10 px-3 rounded-2xl border-2 border-[#E5E7EB] bg-white text-slate-700 text-sm font-medium focus:border-[#FFB6C1] outline-none transition-colors"
+            className="w-full h-10 px-3 rounded-2xl border border-slate-200 bg-white text-slate-700 text-sm font-medium focus:border-indigo-300 outline-none transition-colors"
           />
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white/80 rounded-3xl p-4 border-2 border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-3xl p-4 border border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-emerald-500 mb-1">{summary.present}</span>
           <span className="text-xs font-bold text-emerald-700 uppercase">Hadir</span>
         </div>
-        <div className="bg-white/80 rounded-3xl p-4 border-2 border-blue-100 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-3xl p-4 border border-blue-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-blue-500 mb-1">{summary.sick}</span>
           <span className="text-xs font-bold text-blue-700 uppercase">Sakit</span>
         </div>
-        <div className="bg-white/80 rounded-3xl p-4 border-2 border-yellow-100 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-3xl p-4 border border-yellow-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-yellow-500 mb-1">{summary.excused}</span>
           <span className="text-xs font-bold text-yellow-700 uppercase">Izin</span>
         </div>
-        <div className="bg-white/80 rounded-3xl p-4 border-2 border-red-100 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-3xl p-4 border border-red-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-red-500 mb-1">{summary.absent}</span>
           <span className="text-xs font-bold text-red-700 uppercase">Alpa</span>
         </div>
-        <div className="bg-white/80 rounded-3xl p-4 border-2 border-purple-100 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-3xl p-4 border border-purple-100 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-black text-purple-500 mb-1">{summary.holiday}</span>
           <span className="text-xs font-bold text-purple-700 uppercase">Libur</span>
         </div>
       </div>
 
       {/* Detail List */}
-      <div className="bg-white/80 rounded-3xl border-2 border-white/80 shadow-sm overflow-hidden backdrop-blur-md">
-        <div className="p-4 border-b-2 border-slate-100 bg-white/50 flex items-center gap-2">
-          <CalendarIcon className="text-[#FF85A2]" size={20} />
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+          <CalendarIcon className="text-indigo-500" size={20} />
           <h2 className="font-bold text-slate-700">Rincian Kehadiran</h2>
         </div>
         
         {isLoading ? (
           <div className="p-12 flex justify-center items-center flex-col gap-3">
-            <Loader2 className="animate-spin text-[#FFB6C1] h-8 w-8" />
+            <Loader2 className="animate-spin text-indigo-400 h-8 w-8" />
             <p className="text-slate-400 text-sm font-medium">Memuat data absensi...</p>
           </div>
         ) : records.length === 0 ? (

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { User, Mail, ShieldCheck, KeyRound, Sparkles } from "lucide-react";
+import LogoutButton from "@/components/shared/LogoutButton";
 
 export const metadata = {
   title: "Profil Orang Tua | Jurnal TK",
@@ -101,9 +102,12 @@ export default async function ParentProfilePage() {
           <p className="text-sm font-medium text-slate-500 mb-5">
             Untuk mengubah password atau memperbarui data diri secara lengkap, silakan hubungi Guru Kelas atau Administrator sekolah.
           </p>
-          <div className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-400 cursor-not-allowed">
-            <KeyRound size={18} />
-            Ubah Password (Hubungi Admin)
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-400 cursor-not-allowed">
+              <KeyRound size={18} />
+              Ubah Password (Hubungi Admin)
+            </div>
+            <LogoutButton className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 hover:bg-red-700 text-white px-6 py-3 text-sm font-bold shadow-md shadow-red-200 transition-all disabled:opacity-50" />
           </div>
         </div>
       </div>

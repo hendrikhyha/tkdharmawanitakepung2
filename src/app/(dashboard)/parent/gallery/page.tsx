@@ -92,7 +92,7 @@ export default async function ParentGalleryPage() {
       </div>
 
       {photos.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/60 p-12 text-center backdrop-blur-md shadow-sm">
+        <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
           <ImageIcon className="mx-auto h-16 w-16 text-slate-300 mb-4" />
           <p className="text-base font-bold text-slate-600">
             Belum ada foto kegiatan
