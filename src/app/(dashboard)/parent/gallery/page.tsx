@@ -10,7 +10,7 @@ interface PhotoItem {
   id: string;
   image_url: string;
   activity: {
-    title: string;
+    theme: string;
     activity_date: string;
   };
 }
@@ -46,7 +46,7 @@ export default async function ParentGalleryPage() {
     // Get published activity IDs for those classes
     const { data: activities } = await supabase
       .from("activities")
-      .select("id, title, activity_date")
+      .select("id, theme, activity_date")
       .in("class_id", classIds)
       .eq("status", "PUBLISHED")
       .order("activity_date", { ascending: false })
@@ -67,7 +67,7 @@ export default async function ParentGalleryPage() {
           id: p.id,
           image_url: p.image_url,
           activity: {
-            title: act?.title || "Kegiatan",
+            theme: act?.theme || "Kegiatan",
             activity_date: act?.activity_date || "",
           },
         };
@@ -112,7 +112,7 @@ export default async function ParentGalleryPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.image_url}
-                  alt={photo.activity.title}
+                  alt={photo.activity.theme}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 
@@ -131,7 +131,7 @@ export default async function ParentGalleryPage() {
                 {/* Overlay on hover */}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pt-12">
                   <p className="text-sm font-bold text-white truncate drop-shadow-md">
-                    {photo.activity.title}
+                    {photo.activity.theme}
                   </p>
                   <p className="text-xs font-medium text-white/80 drop-shadow-md mt-0.5">
                     {photo.activity.activity_date}

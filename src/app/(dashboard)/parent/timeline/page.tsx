@@ -51,7 +51,8 @@ export default async function ParentTimelinePage() {
       .from("activities")
       .select(`
         id,
-        title,
+        theme,
+        sub_theme,
         description,
         activity_date,
         activity_time,
@@ -186,9 +187,9 @@ export default async function ParentTimelinePage() {
                     )}
 
                     {/* Photo grid */}
-                    {activity.activity_photos.length > 0 && (
+                    {(activity.activity_photos?.length ?? 0) > 0 && (
                       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                        {activity.activity_photos.map((photo) => (
+                        {(activity.activity_photos || []).map((photo) => (
                           <div
                             key={photo.id}
                             className="aspect-video rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm"
