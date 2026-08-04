@@ -49,8 +49,20 @@ export default function AttendanceReportClient({ classId, students }: Props) {
   };
 
   const setThisMonth = () => {
-    setStartDate(format(startOfMonth(new Date()), "yyyy-MM-dd"));
-    setEndDate(format(endOfMonth(new Date()), "yyyy-MM-dd"));
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const lastDay = new Date(year, month, 0).getDate();
+    setStartDate(`${year}-${String(month).padStart(2, "0")}-01`);
+    setEndDate(`${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`);
+  };
+
+  const handleMonthChange = (monthStr: string) => {
+    if (!monthStr) return;
+    const [year, month] = monthStr.split("-").map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    setStartDate(`${year}-${String(month).padStart(2, "0")}-01`);
+    setEndDate(`${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`);
   };
 
   // Process data for the table
@@ -196,6 +208,16 @@ export default function AttendanceReportClient({ classId, students }: Props) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end justify-between bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
         <div className="flex flex-wrap gap-4 items-end">
+          <div className="space-y-2">
+            <Label htmlFor="selectMonth" className="text-white/80">Pilih Bulan</Label>
+            <Input 
+              id="selectMonth" 
+              type="month" 
+              value={startDate.slice(0, 7)}
+              onChange={(e) => handleMonthChange(e.target.value)}
+              className="border-white/10 bg-slate-900 text-white focus-visible:ring-blue-400/30 [color-scheme:dark]"
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="startDate" className="text-white/80">Dari Tanggal</Label>
             <div className="relative">

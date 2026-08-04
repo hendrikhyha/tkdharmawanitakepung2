@@ -82,9 +82,11 @@ export default function ParentAttendanceClient({ students }: Props) {
             type="month"
             value={startDate.slice(0, 7)}
             onChange={(e) => {
-              const date = new Date(e.target.value + "-01");
-              setStartDate(format(startOfMonth(date), "yyyy-MM-dd"));
-              setEndDate(format(endOfMonth(date), "yyyy-MM-dd"));
+              if (!e.target.value) return;
+              const [year, month] = e.target.value.split("-").map(Number);
+              const lastDay = new Date(year, month, 0).getDate();
+              setStartDate(`${year}-${String(month).padStart(2, "0")}-01`);
+              setEndDate(`${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`);
             }}
             className="w-full h-10 px-3 rounded-2xl border border-slate-200 bg-white text-slate-700 text-sm font-medium focus:border-indigo-300 outline-none transition-colors"
           />
