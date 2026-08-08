@@ -51,7 +51,8 @@ export async function getAttendanceReport(classId: string, startDate: string, en
     .eq("class_id", classId)
     .gte("date", startDate)
     .lte("date", endDate)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(5000);
 
   if (error || !data) {
     console.error("Error fetching attendance report:", error);
@@ -70,7 +71,8 @@ export async function getStudentAttendance(studentId: string, startDate: string,
     .eq("student_id", studentId)
     .gte("date", startDate)
     .lte("date", endDate)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(5000);
 
   if (error || !data) {
     console.error("Error fetching student attendance:", error);

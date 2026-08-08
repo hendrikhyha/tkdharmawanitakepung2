@@ -66,12 +66,20 @@ export default function AttendanceReportClient({ classId, students }: Props) {
   };
 
   // Process data for the table
+  const totalDaysInRange = useMemo(() => {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  }, [startDate, endDate]);
+
   const processedData = useMemo(() => {
-    const report: Record<string, { present: number, sick: number, excused: number, absent: number, holiday: number, total: number }> = {};
+    const report: Record<string, { present: number, sick: number, excused: number, absent: number, holiday: number, unfilled: number, total: number }> = {};
     
     // Initialize
     students.forEach(s => {
-      report[s.id] = { present: 0, sick: 0, excused: 0, absent: 0, holiday: 0, total: 0 };
+      report[s.id] = { present: 0, sick: 0, excused: 0, absent: 0, holiday: 0, unfilled: 0, total: totalDaysInRange };
     });
 
     // Populate
@@ -86,8 +94,13 @@ export default function AttendanceReportClient({ classId, students }: Props) {
       }
     });
 
+    // Calculate unfilled
+    Object.values(report).forEach(r => {
+      r.unfilled = Math.max(0, totalDaysInRange - (r.present + r.sick + r.excused + r.absent + r.holiday));
+    });
+
     return report;
-  }, [records, students]);
+  }, [records, students, totalDaysInRange]);
 
   const handleExportExcel = async () => {
     setIsLoading(true);
@@ -110,7 +123,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
       // Header row
       const headerRowIndex = 5;
       const headerRow = worksheet.getRow(headerRowIndex);
-      headerRow.values = ["No", "Nama Siswa", "Hadir", "Sakit", "Izin", "Alpa", "Libur", "Total Hari"];
+      headerRow.values = ["No", "Nama Siswa", "Hadir", "Sakit", "Izin", "Alpa", "Libur", "Belum Diisi", "Total Hari"];
       headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       headerRow.eachCell((cell: any) => {
@@ -130,6 +143,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
         { key: "izin", width: 10 },
         { key: "alpa", width: 10 },
         { key: "libur", width: 10 },
+        { key: "belum_diisi", width: 12 },
         { key: "total", width: 12 },
       ];
 
@@ -138,7 +152,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
       students.forEach((student, i) => {
         const data = processedData[student.id];
         const row = worksheet.getRow(currentRowIndex);
-        row.values = [i + 1, student.name, data.present, data.sick, data.excused, data.absent, data.holiday, data.total];
+        row.values = [i + 1, student.name, data.present, data.sick, data.excused, data.absent, data.holiday, data.unfilled, data.total];
         row.getCell(1).alignment = { horizontal: "center" };
         row.getCell(3).alignment = { horizontal: "center" };
         row.getCell(4).alignment = { horizontal: "center" };
@@ -146,6 +160,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
         row.getCell(6).alignment = { horizontal: "center" };
         row.getCell(7).alignment = { horizontal: "center" };
         row.getCell(8).alignment = { horizontal: "center" };
+        row.getCell(9).alignment = { horizontal: "center" };
         currentRowIndex++;
       });
 
@@ -168,7 +183,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
   };
 
   const handleDownloadCSV = () => {
-    const headers = ["No", "Nama Siswa", "Hadir", "Sakit", "Izin", "Alpa", "Libur", "Total Hari"];
+    const headers = ["No", "Nama Siswa", "Hadir", "Sakit", "Izin", "Alpa", "Libur", "Belum Diisi", "Total Hari"];
     const rows = students.map((s, i) => {
       const data = processedData[s.id];
       return [
@@ -179,6 +194,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
         data.excused,
         data.absent,
         data.holiday,
+        data.unfilled,
         data.total
       ];
     });
@@ -309,6 +325,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
                   <th className="p-4 font-medium text-center text-yellow-400 print:text-yellow-700 print:border-b print:border-gray-300">Izin</th>
                   <th className="p-4 font-medium text-center text-red-400 print:text-red-700 print:border-b print:border-gray-300">Alpa</th>
                   <th className="p-4 font-medium text-center text-purple-400 print:text-purple-700 print:border-b print:border-gray-300">Libur</th>
+                  <th className="p-4 font-medium text-center text-slate-400 print:text-slate-600 print:border-b print:border-gray-300">Kosong</th>
                   <th className="p-4 font-medium text-center print:border-b print:border-gray-300">Total Hari</th>
                 </tr>
               </thead>
@@ -323,6 +340,7 @@ export default function AttendanceReportClient({ classId, students }: Props) {
                       <td className="p-4 text-center font-bold text-yellow-400 print:text-yellow-700">{data.excused}</td>
                       <td className="p-4 text-center font-bold text-red-400 print:text-red-700">{data.absent}</td>
                       <td className="p-4 text-center font-bold text-purple-400 print:text-purple-700">{data.holiday}</td>
+                      <td className="p-4 text-center font-bold text-slate-400 print:text-slate-500">{data.unfilled > 0 ? data.unfilled : '-'}</td>
                       <td className="p-4 text-center text-white/60 font-semibold print:text-gray-600">{data.total}</td>
                     </tr>
                   );
