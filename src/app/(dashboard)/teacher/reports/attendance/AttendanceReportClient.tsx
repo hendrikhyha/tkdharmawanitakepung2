@@ -85,7 +85,6 @@ export default function AttendanceReportClient({ classId, students }: Props) {
     // Populate
     records.forEach(r => {
       if (report[r.student_id]) {
-        report[r.student_id].total++;
         if (r.status === "PRESENT") report[r.student_id].present++;
         else if (r.status === "SICK") report[r.student_id].sick++;
         else if (r.status === "EXCUSED") report[r.student_id].excused++;
