@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import TeacherShell from "@/components/dashboard/TeacherShell";
 
+import { getTeacherNotifications } from "@/services/teacher";
+
 export default async function TeacherLayout({
   children,
 }: {
@@ -28,5 +30,7 @@ export default async function TeacherLayout({
     redirect("/login");
   }
 
-  return <TeacherShell user={profile}>{children}</TeacherShell>;
+  const notifications = await getTeacherNotifications(user.id);
+
+  return <TeacherShell user={profile} notifications={notifications}>{children}</TeacherShell>;
 }

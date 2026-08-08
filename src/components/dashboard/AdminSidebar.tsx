@@ -10,6 +10,7 @@ import {
   BookOpen,
   X,
   Calendar,
+  Settings,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/LogoutButton";
 import { UserProfile } from "@/types/user";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/admin/students", label: "Siswa", icon: Baby },
   { href: "/admin/classes", label: "Kelas", icon: BookOpen },
   { href: "/admin/academic-years", label: "Tahun Ajaran", icon: Calendar },
+  { href: "/admin/settings", label: "Pengaturan", icon: Settings },
 ];
 
 interface AdminSidebarProps {
