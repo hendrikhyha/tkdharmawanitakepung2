@@ -139,3 +139,67 @@ export async function saveStudentProgress(formData: FormData) {
     return { error: err.message };
   }
 }
+
+export async function saveSingleStudentProgress(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const activityId = formData.get("activityId") as string;
+    const studentId = formData.get("studentId") as string;
+    const notes = formData.get("notes") as string;
+    const photo = formData.get("photo") as File | null;
+    const existingPhotoUrl = formData.get("existing_photo") as string | null;
+
+    let finalPhotoUrl = existingPhotoUrl || null;
+
+    if (photo && photo.size > 0) {
+      // Process photo upload
+      const fileExt = photo.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `progress/${activityId}/${studentId}/${fileName}`;
+
+      const arrayBuffer = await photo.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const { data, error: uploadError } = await supabase.storage
+        .from("activities")
+        .upload(filePath, buffer, {
+          contentType: photo.type,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        return { error: `Gagal mengunggah foto: ${uploadError.message}` };
+      }
+
+      if (data) {
+        const { data: publicUrlData } = supabase.storage
+          .from("activities")
+          .getPublicUrl(data.path);
+        
+        finalPhotoUrl = publicUrlData.publicUrl;
+      }
+    }
+
+    const { error } = await supabase
+      .from("activity_student_progress")
+      .upsert(
+        {
+          activity_id: activityId,
+          student_id: studentId,
+          notes: notes,
+          photo_url: finalPhotoUrl,
+        },
+        {
+          onConflict: "activity_id,student_id",
+        }
+      );
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}

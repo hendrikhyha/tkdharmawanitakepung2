@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getStudentProgress, saveStudentProgress } from "@/app/actions/progress";
+import { getStudentProgress, saveSingleStudentProgress } from "@/app/actions/progress";
 import { Loader2, Save, CheckCircle2, ImagePlus, X } from "lucide-react";
 import imageCompression from "browser-image-compression";
 
@@ -25,9 +25,11 @@ interface StudentProgress {
 export default function ProgressForm({ activityId }: ProgressFormProps) {
   const [data, setData] = useState<StudentProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+
+  // Per-student loading and success states
+  const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
+  const [success, setSuccess] = useState<Record<string, boolean>>({});
 
   // Form state maps student_id -> notes
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -63,7 +65,7 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
       ...prev,
       [studentId]: value,
     }));
-    setSuccess(false);
+    setSuccess((prev) => ({ ...prev, [studentId]: false }));
   };
 
   const handlePhotoSelect = async (studentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,45 +92,48 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
     setPhotoFiles((prev) => ({ ...prev, [studentId]: compressedFile }));
     setPhotoPreviews((prev) => ({ ...prev, [studentId]: preview }));
     setExistingPhotos((prev) => ({ ...prev, [studentId]: null }));
-    setSuccess(false);
+    setSuccess((prev) => ({ ...prev, [studentId]: false }));
   };
 
   const removePhoto = (studentId: string) => {
     setPhotoFiles((prev) => ({ ...prev, [studentId]: null }));
     setPhotoPreviews((prev) => ({ ...prev, [studentId]: null }));
     setExistingPhotos((prev) => ({ ...prev, [studentId]: null }));
-    setSuccess(false);
+    setSuccess((prev) => ({ ...prev, [studentId]: false }));
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
+  const handleSaveSingle = async (studentId: string) => {
+    setIsSaving((prev) => ({ ...prev, [studentId]: true }));
     setError(null);
-    setSuccess(false);
+    setSuccess((prev) => ({ ...prev, [studentId]: false }));
 
     const formData = new FormData();
     formData.append("activityId", activityId);
+    formData.append("studentId", studentId);
     
-    Object.entries(notes).forEach(([student_id, value]) => {
-      formData.append(`notes_${student_id}`, value);
-    });
-
-    Object.entries(photoFiles).forEach(([student_id, file]) => {
-      if (file) formData.append(`photo_${student_id}`, file);
-    });
-
-    Object.entries(existingPhotos).forEach(([student_id, url]) => {
-      if (url) formData.append(`existing_photo_${student_id}`, url);
-    });
-
-    const res = await saveStudentProgress(formData);
+    if (notes[studentId]) {
+      formData.append("notes", notes[studentId]);
+    }
     
-    setIsSaving(false);
+    if (photoFiles[studentId]) {
+      formData.append("photo", photoFiles[studentId]!);
+    }
+    
+    if (existingPhotos[studentId]) {
+      formData.append("existing_photo", existingPhotos[studentId]!);
+    }
+
+    const res = await saveSingleStudentProgress(formData);
+    
+    setIsSaving((prev) => ({ ...prev, [studentId]: false }));
     
     if (res.error) {
-      setError(res.error);
+      alert(`Gagal menyimpan data murid: ${res.error}`);
     } else {
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000); // Hide success message after 3s
+      setSuccess((prev) => ({ ...prev, [studentId]: true }));
+      setTimeout(() => {
+        setSuccess((prev) => ({ ...prev, [studentId]: false }));
+      }, 3000);
     }
   };
 
@@ -177,6 +182,27 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
                 <div className="font-medium text-white truncate">
                   {item.student.name}
                 </div>
+                
+                <div className="ml-auto flex items-center gap-2">
+                  {success[item.student.id] && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-400 animate-in fade-in">
+                      <CheckCircle2 size={14} />
+                      Tersimpan
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleSaveSingle(item.student.id)}
+                    disabled={isSaving[item.student.id]}
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-400 transition hover:bg-indigo-500/20 active:scale-95 disabled:opacity-50"
+                  >
+                    {isSaving[item.student.id] ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    Simpan
+                  </button>
+                </div>
               </div>
               
               {/* Progress Input */}
@@ -224,23 +250,6 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-4 mt-6">
-        {success && (
-          <span className="flex items-center gap-2 text-sm text-emerald-400 animate-in fade-in slide-in-from-right-4">
-            <CheckCircle2 size={16} />
-            Tersimpan
-          </span>
-        )}
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-2.5 font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50 active:scale-95 shadow-lg shadow-indigo-500/20"
-        >
-          {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          Simpan Penilaian
-        </button>
       </div>
     </div>
   );
