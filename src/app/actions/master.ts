@@ -225,18 +225,40 @@ export async function deleteClass(id: string) {
 export async function createStudent(data: StudentFormValues) {
   const supabase = await createClient();
 
-  const { error } = await supabase.from("students").insert({
+  // Insert student (keep parent_id for backward compat with parent_id_1)
+  const { data: inserted, error } = await supabase.from("students").insert({
     name: data.name,
     class_id: data.class_id || null,
-    parent_id: data.parent_id || null,
+    parent_id: data.parent_id_1 || null,
     entry_academic_year_id: data.entry_academic_year_id || null,
     birth_date: data.birth_date || null,
     photo: data.photo || null,
-  });
+  }).select("id").single();
 
   if (error) return { error: error.message };
+  if (!inserted) return { error: "Gagal membuat data siswa" };
+
+  // Insert into student_parents junction table
+  const parentEntries: { student_id: string; parent_id: string; is_primary: boolean }[] = [];
+  
+  if (data.parent_id_1) {
+    parentEntries.push({ student_id: inserted.id, parent_id: data.parent_id_1, is_primary: true });
+  }
+  if (data.parent_id_2 && data.parent_id_2 !== data.parent_id_1) {
+    parentEntries.push({ student_id: inserted.id, parent_id: data.parent_id_2, is_primary: false });
+  }
+
+  if (parentEntries.length > 0) {
+    const { error: spError } = await supabase.from("student_parents").insert(parentEntries);
+    if (spError) {
+      // Non-fatal: student is created, just log
+      console.error("Error inserting student_parents:", spError.message);
+    }
+  }
+
   return { success: true };
 }
+
 
 export async function updateStudent(id: string, data: StudentFormValues) {
   const supabase = await createClient();
@@ -246,7 +268,7 @@ export async function updateStudent(id: string, data: StudentFormValues) {
     .update({
       name: data.name,
       class_id: data.class_id || null,
-      parent_id: data.parent_id || null,
+      parent_id: data.parent_id_1 || null,
       entry_academic_year_id: data.entry_academic_year_id || null,
       birth_date: data.birth_date || null,
       photo: data.photo || null,
@@ -254,8 +276,30 @@ export async function updateStudent(id: string, data: StudentFormValues) {
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Sync student_parents junction table
+  // Delete all existing entries for this student, then re-insert
+  await supabase.from("student_parents").delete().eq("student_id", id);
+
+  const parentEntries: { student_id: string; parent_id: string; is_primary: boolean }[] = [];
+  
+  if (data.parent_id_1) {
+    parentEntries.push({ student_id: id, parent_id: data.parent_id_1, is_primary: true });
+  }
+  if (data.parent_id_2 && data.parent_id_2 !== data.parent_id_1) {
+    parentEntries.push({ student_id: id, parent_id: data.parent_id_2, is_primary: false });
+  }
+
+  if (parentEntries.length > 0) {
+    const { error: spError } = await supabase.from("student_parents").insert(parentEntries);
+    if (spError) {
+      console.error("Error syncing student_parents:", spError.message);
+    }
+  }
+
   return { success: true };
 }
+
 
 export async function deleteStudent(id: string) {
   const supabase = await createClient();

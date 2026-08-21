@@ -22,7 +22,10 @@ export interface ParentDashboardData {
   totalPhotos: number;
 }
 
-export async function getParentDashboardData(userId: string): Promise<ParentDashboardData | null> {
+export async function getParentDashboardData(
+  userId: string,
+  selectedChildId?: string | null
+): Promise<ParentDashboardData | null> {
   const supabase = await createClient();
 
   // 1. Get Parent ID
@@ -34,7 +37,18 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
 
   if (!parent) return null;
 
-  // 2. Get Children Info
+  // 2. Get Children via student_parents junction table
+  const { data: studentParentLinks } = await supabase
+    .from("student_parents")
+    .select("student_id")
+    .eq("parent_id", parent.id);
+
+  const childStudentIds = (studentParentLinks || []).map((sp) => sp.student_id);
+
+  if (childStudentIds.length === 0) {
+    return { children: [], recentActivities: [], totalPhotos: 0 };
+  }
+
   const { data: childrenRaw } = await supabase
     .from("students")
     .select(`
@@ -45,7 +59,7 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
         name
       )
     `)
-    .eq("parent_id", parent.id);
+    .in("id", childStudentIds);
 
   interface RawChild {
     id: string;
@@ -61,13 +75,16 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
     className: c.classes?.name || null,
   }));
 
+  // 3. Determine which children to filter by
+  const filterChildIds = selectedChildId
+    ? childStudentIds.filter((id) => id === selectedChildId)
+    : childStudentIds;
 
-
-  // Actually, let's re-fetch class_ids properly
+  // Get class_ids for filtered children
   const { data: studentClassIds } = await supabase
     .from("students")
     .select("class_id")
-    .eq("parent_id", parent.id);
+    .in("id", filterChildIds);
 
   const uniqueClassIds = [...new Set((studentClassIds || []).map((s) => s.class_id).filter(Boolean))] as string[];
 
@@ -100,13 +117,11 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
       .order("sort_order", { ascending: true })
       .limit(10);
 
-    const childrenIds = children.map((c) => c.id);
-
     // Filter progress to only include the parent's children
     recentActivities = ((activities as any) || []).map((act: any) => ({
       ...act,
       activity_student_progress: act.activity_student_progress?.filter((p: any) =>
-        childrenIds.includes(p.student_id)
+        filterChildIds.includes(p.student_id)
       ),
     }));
   }
@@ -122,4 +137,55 @@ export async function getParentDashboardData(userId: string): Promise<ParentDash
     recentActivities,
     totalPhotos,
   };
+}
+
+/**
+ * Get children for a parent user using the student_parents junction table.
+ * Used by attendance, gallery, progress pages.
+ */
+export async function getParentChildren(userId: string): Promise<ChildInfo[]> {
+  const supabase = await createClient();
+
+  const { data: parent } = await supabase
+    .from("parents")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (!parent) return [];
+
+  const { data: studentParentLinks } = await supabase
+    .from("student_parents")
+    .select("student_id")
+    .eq("parent_id", parent.id);
+
+  const childStudentIds = (studentParentLinks || []).map((sp) => sp.student_id);
+
+  if (childStudentIds.length === 0) return [];
+
+  const { data: childrenRaw } = await supabase
+    .from("students")
+    .select(`
+      id,
+      name,
+      birth_date,
+      classes (
+        name
+      )
+    `)
+    .in("id", childStudentIds);
+
+  interface RawChild {
+    id: string;
+    name: string;
+    birth_date: string | null;
+    classes?: { name: string } | null;
+  }
+
+  return ((childrenRaw as unknown as RawChild[]) || []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    birth_date: c.birth_date,
+    className: c.classes?.name || null,
+  }));
 }

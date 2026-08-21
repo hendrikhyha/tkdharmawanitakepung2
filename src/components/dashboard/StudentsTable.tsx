@@ -53,6 +53,31 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+/** Helper: get parent names from student_parents array */
+function getParentNames(student: StudentData): string[] {
+  if (student.student_parents && student.student_parents.length > 0) {
+    return student.student_parents
+      .sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0))
+      .map((sp) => sp.parents?.users?.name || "-");
+  }
+  // Fallback to legacy parent_id relation
+  if (student.parents?.users?.name) {
+    return [student.parents.users.name];
+  }
+  return [];
+}
+
+/** Helper: extract parent IDs from student_parents for form */
+function getParentIds(student: StudentData): { parent_id_1: string; parent_id_2: string } {
+  const sorted = (student.student_parents || []).sort(
+    (a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)
+  );
+  return {
+    parent_id_1: sorted[0]?.parent_id ?? student.parent_id ?? "",
+    parent_id_2: sorted[1]?.parent_id ?? "",
+  };
+}
+
 export default function StudentsTable() {
   const queryClient = useQueryClient();
   const { data: students, isLoading, error } = useStudents();
@@ -71,7 +96,7 @@ export default function StudentsTable() {
 
   const addForm = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { name: "", class_id: "", parent_id: "", entry_academic_year_id: "", birth_date: "" },
+    defaultValues: { name: "", class_id: "", parent_id_1: "", parent_id_2: "", entry_academic_year_id: "", birth_date: "" },
   });
 
   const editForm = useForm<StudentFormValues>({
@@ -99,10 +124,12 @@ export default function StudentsTable() {
 
   const openEdit = (s: StudentData) => {
     setSelectedStudent(s);
+    const parentIds = getParentIds(s);
     editForm.reset({
       name: s.name,
       class_id: s.class_id ?? "",
-      parent_id: s.parent_id ?? "",
+      parent_id_1: parentIds.parent_id_1,
+      parent_id_2: parentIds.parent_id_2,
       entry_academic_year_id: s.entry_academic_year_id ?? "",
       birth_date: s.birth_date ?? "",
     });
@@ -143,6 +170,54 @@ export default function StudentsTable() {
 
   if (error) return <div className="text-red-400">Error loading data.</div>;
 
+  /** Reusable parent selector fields for Add/Edit dialogs */
+  const renderParentFields = (
+    form: ReturnType<typeof useForm<StudentFormValues>>,
+    defaultParent1?: string,
+    defaultParent2?: string
+  ) => (
+    <>
+      <div className="space-y-2">
+        <Label className="text-white/80">Orang Tua 1</Label>
+        <Select
+          onValueChange={(val: any) => form.setValue("parent_id_1", val === "none" ? null : val)}
+          defaultValue={defaultParent1 ?? "none"}
+        >
+          <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
+            <SelectValue placeholder="Pilih orang tua" />
+          </SelectTrigger>
+          <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
+            <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
+            {parents?.map((p) => (
+              <SelectItem key={p.id} value={p.id} className="focus:bg-white/10 focus:text-white">
+                {p.users.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-white/80">Orang Tua 2 <span className="text-white/30 font-normal">(Opsional)</span></Label>
+        <Select
+          onValueChange={(val: any) => form.setValue("parent_id_2", val === "none" ? null : val)}
+          defaultValue={defaultParent2 ?? "none"}
+        >
+          <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
+            <SelectValue placeholder="Pilih orang tua ke-2" />
+          </SelectTrigger>
+          <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
+            <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
+            {parents?.map((p) => (
+              <SelectItem key={p.id} value={p.id} className="focus:bg-white/10 focus:text-white">
+                {p.users.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -181,7 +256,7 @@ export default function StudentsTable() {
           <TableBody>
             {isLoading ? (
               <TableRow className="border-none hover:bg-transparent">
-                <TableCell colSpan={5} className="h-32 text-center">
+                <TableCell colSpan={6} className="h-32 text-center">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin text-white/40" />
                 </TableCell>
               </TableRow>
@@ -192,42 +267,63 @@ export default function StudentsTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredStudents?.map((s) => (
-                <TableRow key={s.id} className="border-white/10 hover:bg-white/5 transition-colors">
-                  <TableCell className="font-medium text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden flex items-center justify-center shrink-0 border border-white/5">
-                        {s.photo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={s.photo} alt={s.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-xs text-white/50 font-bold">{s.name.charAt(0).toUpperCase()}</span>
-                        )}
+              filteredStudents?.map((s) => {
+                const parentNames = getParentNames(s);
+                return (
+                  <TableRow key={s.id} className="border-white/10 hover:bg-white/5 transition-colors">
+                    <TableCell className="font-medium text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden flex items-center justify-center shrink-0 border border-white/5">
+                          {s.photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={s.photo} alt={s.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-xs text-white/50 font-bold">{s.name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <span>{s.name}</span>
                       </div>
-                      <span>{s.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-white/70">{s.classes?.name || "-"}</TableCell>
-                  <TableCell className="text-white/70">{s.entry_academic_year?.name || "-"}</TableCell>
-                  <TableCell className="text-white/70">{s.parents?.users.name || "-"}</TableCell>
-                  <TableCell className="text-white/70">{s.birth_date || "-"}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="rounded-lg p-2 text-white/40 hover:bg-white/10 hover:text-white transition">
-                        <MoreHorizontal size={16} />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="border-white/10 bg-slate-900 text-white">
-                        <DropdownMenuItem onClick={() => openEdit(s)} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openDelete(s)} className="focus:bg-red-500/20 focus:text-red-400 text-red-400 cursor-pointer">
-                          <Trash className="mr-2 h-4 w-4" /> Hapus
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                    <TableCell className="text-white/70">{s.classes?.name || "-"}</TableCell>
+                    <TableCell className="text-white/70">{s.entry_academic_year?.name || "-"}</TableCell>
+                    <TableCell className="text-white/70">
+                      {parentNames.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {parentNames.map((name, idx) => (
+                            <span key={idx} className="flex items-center gap-1.5">
+                              {name}
+                              {idx === 0 && parentNames.length > 1 && (
+                                <span className="text-[10px] bg-yellow-400/20 text-yellow-300 px-1.5 py-0.5 rounded-md font-bold">1</span>
+                              )}
+                              {idx === 1 && (
+                                <span className="text-[10px] bg-blue-400/20 text-blue-300 px-1.5 py-0.5 rounded-md font-bold">2</span>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-white/70">{s.birth_date || "-"}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="rounded-lg p-2 text-white/40 hover:bg-white/10 hover:text-white transition">
+                          <MoreHorizontal size={16} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-white/10 bg-slate-900 text-white">
+                          <DropdownMenuItem onClick={() => openEdit(s)} className="focus:bg-white/10 focus:text-white cursor-pointer">
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openDelete(s)} className="focus:bg-red-500/20 focus:text-red-400 text-red-400 cursor-pointer">
+                            <Trash className="mr-2 h-4 w-4" /> Hapus
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -269,22 +365,7 @@ export default function StudentsTable() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-white/80">Orang Tua</Label>
-              <Select onValueChange={(val: any) => addForm.setValue("parent_id", val === "none" ? null : val)} defaultValue="none">
-                <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
-                  <SelectValue placeholder="Pilih orang tua" />
-                </SelectTrigger>
-                <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
-                  <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
-                  {parents?.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="focus:bg-white/10 focus:text-white">
-                      {p.users.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {renderParentFields(addForm)}
             <div className="space-y-2">
               <Label className="text-white/80">Tahun Ajaran Masuk (Opsional)</Label>
               <Select onValueChange={(val: any) => addForm.setValue("entry_academic_year_id", val === "none" ? null : val)} defaultValue="none">
@@ -351,22 +432,11 @@ export default function StudentsTable() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-white/80">Orang Tua</Label>
-              <Select onValueChange={(val: any) => editForm.setValue("parent_id", val === "none" ? null : val)} defaultValue={selectedStudent?.parent_id ?? "none"}>
-                <SelectTrigger className="border-white/10 bg-white/5 text-white focus:ring-yellow-400/30">
-                  <SelectValue placeholder="Pilih orang tua" />
-                </SelectTrigger>
-                <SelectContent className="border-white/10 bg-slate-900 text-white max-h-48">
-                  <SelectItem value="none" className="text-white/40">-- Tidak ada --</SelectItem>
-                  {parents?.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="focus:bg-white/10 focus:text-white">
-                      {p.users.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {selectedStudent && renderParentFields(
+              editForm,
+              getParentIds(selectedStudent).parent_id_1 || "none",
+              getParentIds(selectedStudent).parent_id_2 || "none"
+            )}
             <div className="space-y-2">
               <Label className="text-white/80">Tahun Ajaran Masuk (Opsional)</Label>
               <Select onValueChange={(val: any) => editForm.setValue("entry_academic_year_id", val === "none" ? null : val)} defaultValue={selectedStudent?.entry_academic_year_id ?? "none"}>

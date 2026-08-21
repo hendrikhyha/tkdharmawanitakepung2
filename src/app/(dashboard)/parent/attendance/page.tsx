@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { getParentChildren } from "@/services/parent";
 import ParentAttendanceClient from "./ParentAttendanceClient";
 
 export const metadata = {
@@ -14,26 +15,19 @@ export default async function ParentAttendancePage() {
     redirect("/login");
   }
 
-  // Get parent profile
-  const { data: parent } = await supabase
-    .from("parents")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  // Get children via student_parents junction table
+  const children = await getParentChildren(user.id);
 
-  if (!parent) {
-    return <div className="p-8 text-slate-500 font-medium">Data orang tua tidak ditemukan.</div>;
-  }
-
-  // Get children (students) for this parent
-  const { data: students } = await supabase
-    .from("students")
-    .select("id, name, classes(name)")
-    .eq("parent_id", parent.id);
-
-  if (!students || students.length === 0) {
+  if (children.length === 0) {
     return <div className="p-8 text-slate-500 font-medium">Belum ada data anak yang terdaftar.</div>;
   }
+
+  // Map to the format expected by ParentAttendanceClient
+  const students = children.map((c) => ({
+    id: c.id,
+    name: c.name,
+    classes: c.className ? { name: c.className } : null,
+  }));
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
@@ -44,8 +38,7 @@ export default async function ParentAttendancePage() {
         </p>
       </div>
 
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <ParentAttendanceClient students={students as any} />
+      <ParentAttendanceClient students={students} />
     </div>
   );
 }

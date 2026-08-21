@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { getParentChildren } from "@/services/parent";
+import ChildSelector from "@/components/dashboard/ChildSelector";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Clock, BookHeart } from "lucide-react";
@@ -19,7 +21,11 @@ interface TimelineActivity {
   activity_student_progress?: Array<{ student_id: string; notes: string; photo_url?: string | null }>;
 }
 
-export default async function ParentTimelinePage() {
+export default async function ParentTimelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ child?: string }>;
+}) {
   const supabase = await createClient();
 
   const {
@@ -28,25 +34,39 @@ export default async function ParentTimelinePage() {
 
   if (!user) redirect("/login");
 
-  // Get parent -> children -> class_ids
-  const { data: parent } = await supabase
-    .from("parents")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  // Get children via student_parents junction
+  const children = await getParentChildren(user.id);
 
-  if (!parent) redirect("/parent");
+  if (children.length === 0) redirect("/parent");
 
-  const { data: students } = await supabase
+  const resolvedParams = await searchParams;
+  const selectedChildId = resolvedParams.child || null;
+
+  // Filter children based on selection
+  const filterChildren = selectedChildId
+    ? children.filter((c) => c.id === selectedChildId)
+    : children;
+
+  const classIds = [...new Set(
+    filterChildren
+      .map((c) => {
+        // We need class_id — get it from students table
+        return null; // We'll fetch below
+      })
+  )];
+
+  // Fetch class IDs for filtered children
+  const childIds = filterChildren.map((c) => c.id);
+  const { data: studentData } = await supabase
     .from("students")
     .select("id, class_id")
-    .eq("parent_id", parent.id);
+    .in("id", childIds);
 
-  const classIds = [...new Set((students || []).map((s) => s.class_id).filter(Boolean))] as string[];
+  const filteredClassIds = [...new Set((studentData || []).map((s) => s.class_id).filter(Boolean))] as string[];
 
   let activities: TimelineActivity[] = [];
 
-  if (classIds.length > 0) {
+  if (filteredClassIds.length > 0) {
     const { data } = await supabase
       .from("activities")
       .select(`
@@ -66,18 +86,18 @@ export default async function ParentTimelinePage() {
           photo_url
         )
       `)
-      .in("class_id", classIds)
+      .in("class_id", filteredClassIds)
       .eq("status", "PUBLISHED")
       .order("activity_date", { ascending: false })
       .order("sort_order", { ascending: true })
       .limit(50);
 
-    const childrenIds = (students || []).map((s) => s.id);
+    const allChildIds = children.map((c) => c.id);
 
     activities = ((data as any) || []).map((act: any) => ({
       ...act,
       activity_student_progress: act.activity_student_progress?.filter((p: any) =>
-        childrenIds.includes(p.student_id)
+        allChildIds.includes(p.student_id)
       ),
     }));
   }
@@ -108,6 +128,14 @@ export default async function ParentTimelinePage() {
           </p>
         </div>
       </div>
+
+      {/* Child Selector */}
+      {children.length > 1 && (
+        <ChildSelector
+          children={children.map((c) => ({ id: c.id, name: c.name, className: c.className }))}
+          selectedChildId={selectedChildId}
+        />
+      )}
 
       {dateKeys.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
@@ -170,8 +198,12 @@ export default async function ParentTimelinePage() {
                         <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Catatan Perkembangan Anak</h4>
                         <div className="space-y-3">
                           {activity.activity_student_progress.map((progress, idx) => {
+                            const childName = children.find((c) => c.id === progress.student_id)?.name || "Anak";
                             return (
                               <div key={idx} className="text-sm">
+                                {children.length > 1 && (
+                                  <span className="font-semibold text-slate-700">{childName}: </span>
+                                )}
                                 <p className="text-slate-600 leading-relaxed bg-white rounded-lg p-3 border border-indigo-50">{progress.notes}</p>
                                 {progress.photo_url && (
                                   <div className="mt-2 aspect-video w-full max-w-[200px] rounded-xl overflow-hidden border border-slate-100 shadow-sm">

@@ -9,6 +9,7 @@ import {
   User,
   X,
   BookOpenCheck,
+  TrendingUp,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/LogoutButton";
 import { UserProfile } from "@/types/user";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/parent/timeline", label: "Lini Masa", icon: Clock },
   { href: "/parent/gallery", label: "Galeri Foto", icon: ImageIcon },
   { href: "/parent/attendance", label: "Kehadiran", icon: BookOpenCheck },
+  { href: "/parent/progress", label: "Perkembangan", icon: TrendingUp },
   { href: "/parent/profile", label: "Profil", icon: User },
 ];
 

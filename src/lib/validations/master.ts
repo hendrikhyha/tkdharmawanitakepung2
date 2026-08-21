@@ -36,7 +36,8 @@ export type ClassFormValues = z.infer<typeof classSchema>;
 export const studentSchema = z.object({
   name: z.string().min(3, "Nama siswa minimal 3 karakter"),
   class_id: z.string().uuid("Pilih kelas").optional().nullable(),
-  parent_id: z.string().uuid("Pilih orang tua").optional().nullable(),
+  parent_id_1: z.string().uuid("Pilih orang tua").optional().nullable(),
+  parent_id_2: z.string().uuid("Pilih orang tua").optional().nullable(),
   entry_academic_year_id: z.string().uuid("Pilih tahun ajaran").optional().nullable(),
   birth_date: z.string().optional().nullable(), // ISO string YYYY-MM-DD
   photo: z.string().optional().nullable(),

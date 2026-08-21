@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getParentDashboardData } from "@/services/parent";
 import StatCard from "@/components/dashboard/StatCard";
 import AnnouncementCarousel from "@/components/dashboard/AnnouncementCarousel";
+import ChildSelector from "@/components/dashboard/ChildSelector";
 import { getAnnouncements } from "@/app/actions/announcements";
 import { Baby, Clock, Image as ImageIcon, Sun, Sparkles } from "lucide-react";
 import { format } from "date-fns";
@@ -13,7 +14,11 @@ export const metadata = {
   title: "Beranda Orang Tua | Jurnal TK",
 };
 
-export default async function ParentDashboard() {
+export default async function ParentDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ child?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,8 +26,11 @@ export default async function ParentDashboard() {
 
   if (!user) redirect("/login");
 
+  const resolvedParams = await searchParams;
+  const selectedChildId = resolvedParams.child || null;
+
   const [data, announcementsRes] = await Promise.all([
-    getParentDashboardData(user.id),
+    getParentDashboardData(user.id, selectedChildId),
     getAnnouncements(),
   ]);
   const announcements = announcementsRes?.data || [];
@@ -54,6 +62,14 @@ export default async function ParentDashboard() {
       </div>
 
       <AnnouncementCarousel initialData={announcements} />
+
+      {/* Child Selector */}
+      {data.children.length > 1 && (
+        <ChildSelector
+          children={data.children.map((c) => ({ id: c.id, name: c.name, className: c.className }))}
+          selectedChildId={selectedChildId}
+        />
+      )}
 
       {/* Children Info Cards */}
       {data.children.length > 0 && (

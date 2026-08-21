@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { getParentChildren } from "@/services/parent";
 import { Image as ImageIcon, Download, Camera } from "lucide-react";
 
 export const metadata = {
@@ -24,21 +25,19 @@ export default async function ParentGalleryPage() {
 
   if (!user) redirect("/login");
 
-  // Get parent -> children -> class_ids
-  const { data: parent } = await supabase
-    .from("parents")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  // Get children via student_parents junction table
+  const children = await getParentChildren(user.id);
 
-  if (!parent) redirect("/parent");
+  if (children.length === 0) redirect("/parent");
 
-  const { data: students } = await supabase
+  // Get class IDs from children
+  const childIds = children.map((c) => c.id);
+  const { data: studentData } = await supabase
     .from("students")
     .select("class_id")
-    .eq("parent_id", parent.id);
+    .in("id", childIds);
 
-  const classIds = [...new Set((students || []).map((s) => s.class_id).filter(Boolean))] as string[];
+  const classIds = [...new Set((studentData || []).map((s) => s.class_id).filter(Boolean))] as string[];
 
   let photos: PhotoItem[] = [];
 
