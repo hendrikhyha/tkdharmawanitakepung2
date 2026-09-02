@@ -15,7 +15,7 @@ export interface ReportActivity {
   status: string;
   activity_photos: ReportPhoto[];
   activity_student_progress?: Array<{
-    notes: string;
+    items?: { notes: string; photo_url: string | null }[];
     students: { id: string; name: string } | { id: string; name: string }[];
   }>;
 }
@@ -105,7 +105,7 @@ export async function getReportData(
         image_url
       ),
       activity_student_progress (
-        notes,
+        items,
         students (
           id,
           name

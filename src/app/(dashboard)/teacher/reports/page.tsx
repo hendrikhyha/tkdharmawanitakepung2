@@ -127,7 +127,11 @@ export default function ReportsPage() {
         
         const progressStr = a.activity_student_progress?.map(p => {
           const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
-          return `${studentName}: ${p.notes}`;
+          const validItems = p.items?.filter(item => item.notes) || [];
+          const notesStr = validItems.length > 0 
+            ? validItems.map((item, idx) => validItems.length > 1 ? `(${idx + 1}) ${item.notes}` : item.notes).join(" ")
+            : "-";
+          return `${studentName}: ${notesStr}`;
         }).join('\n') || "-";
 
         const row = worksheet.getRow(currentRowIndex);
@@ -201,7 +205,11 @@ export default function ReportsPage() {
     const rows = reportData.activities.map((a, i) => {
       const progressStr = a.activity_student_progress?.map(p => {
         const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
-        return `${studentName}: ${p.notes}`;
+        const validItems = p.items?.filter(item => item.notes) || [];
+        const notesStr = validItems.length > 0 
+          ? validItems.map((item, idx) => validItems.length > 1 ? `(${idx + 1}) ${item.notes}` : item.notes).join(" ")
+          : "-";
+        return `${studentName}: ${notesStr}`;
       }).join(' | ') || "-";
 
       return [
@@ -448,9 +456,23 @@ export default function ReportsPage() {
                             <ul className="list-disc pl-4 space-y-1">
                               {activity.activity_student_progress.map((p, idx) => {
                                 const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
+                                const validItems = p.items?.filter(item => item.notes) || [];
                                 return (
-                                  <li key={idx} className="text-xs">
-                                    <span className="font-semibold">{studentName}:</span> {p.notes}
+                                  <li key={idx} className="text-xs mb-1">
+                                    <span className="font-semibold">{studentName}:</span>{" "}
+                                    {validItems.length > 0 ? (
+                                      validItems.length > 1 ? (
+                                        <ul className="list-decimal pl-4 mt-0.5 space-y-0.5">
+                                          {validItems.map((item, i) => (
+                                            <li key={i}>{item.notes}</li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <span>{validItems[0].notes}</span>
+                                      )
+                                    ) : (
+                                      <span className="text-white/40 print:text-gray-400 italic">Tidak ada catatan</span>
+                                    )}
                                   </li>
                                 );
                               })}
