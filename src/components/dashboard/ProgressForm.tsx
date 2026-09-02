@@ -17,8 +17,7 @@ interface StudentProgress {
   };
   progress: {
     id?: string;
-    notes: string;
-    photo_url?: string | null;
+    items?: { notes: string; photo_url?: string | null }[];
   } | null;
 }
 
@@ -31,11 +30,14 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
   const [success, setSuccess] = useState<Record<string, boolean>>({});
 
-  // Form state maps student_id -> notes
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [photoFiles, setPhotoFiles] = useState<Record<string, File | null>>({});
-  const [photoPreviews, setPhotoPreviews] = useState<Record<string, string | null>>({});
-  const [existingPhotos, setExistingPhotos] = useState<Record<string, string | null>>({});
+  // Form state maps student_id -> array of 5 items
+  const [notes, setNotes] = useState<Record<string, string[]>>({});
+  const [photoFiles, setPhotoFiles] = useState<Record<string, (File | null)[]>>({});
+  const [photoPreviews, setPhotoPreviews] = useState<Record<string, (string | null)[]>>({});
+  const [existingPhotos, setExistingPhotos] = useState<Record<string, (string | null)[]>>({});
+  
+  // Active tab per student (0 to 4)
+  const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function loadData() {
@@ -45,30 +47,44 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
         setError(res.error);
       } else if (res.data) {
         setData(res.data);
-        // Initialize form state
-        const initialNotes: Record<string, string> = {};
-        const initialPhotos: Record<string, string | null> = {};
+        // Initialize form state with 5 slots
+        const initialNotes: Record<string, string[]> = {};
+        const initialPhotos: Record<string, (string | null)[]> = {};
+        const initialTabs: Record<string, number> = {};
+        
         res.data.forEach((item) => {
-          initialNotes[item.student.id] = item.progress?.notes || "";
-          initialPhotos[item.student.id] = item.progress?.photo_url || null;
+          initialNotes[item.student.id] = ["", "", "", "", ""];
+          initialPhotos[item.student.id] = [null, null, null, null, null];
+          initialTabs[item.student.id] = 0;
+          
+          if (item.progress?.items) {
+            item.progress.items.forEach((slot, index) => {
+              if (index < 5) {
+                initialNotes[item.student.id][index] = slot.notes || "";
+                initialPhotos[item.student.id][index] = slot.photo_url || null;
+              }
+            });
+          }
         });
         setNotes(initialNotes);
         setExistingPhotos(initialPhotos);
+        setActiveTabs(initialTabs);
       }
       setIsLoading(false);
     }
     loadData();
   }, [activityId]);
 
-  const handleNotesChange = (studentId: string, value: string) => {
-    setNotes((prev) => ({
-      ...prev,
-      [studentId]: value,
-    }));
+  const handleNotesChange = (studentId: string, index: number, value: string) => {
+    setNotes((prev) => {
+      const newNotes = [...(prev[studentId] || ["", "", "", "", ""])];
+      newNotes[index] = value;
+      return { ...prev, [studentId]: newNotes };
+    });
     setSuccess((prev) => ({ ...prev, [studentId]: false }));
   };
 
-  const handlePhotoSelect = async (studentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (studentId: string, index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -89,16 +105,47 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
     }
 
     const preview = URL.createObjectURL(compressedFile);
-    setPhotoFiles((prev) => ({ ...prev, [studentId]: compressedFile }));
-    setPhotoPreviews((prev) => ({ ...prev, [studentId]: preview }));
-    setExistingPhotos((prev) => ({ ...prev, [studentId]: null }));
+    
+    setPhotoFiles((prev) => {
+      const newFiles = [...(prev[studentId] || [null, null, null, null, null])];
+      newFiles[index] = compressedFile;
+      return { ...prev, [studentId]: newFiles };
+    });
+    
+    setPhotoPreviews((prev) => {
+      const newPreviews = [...(prev[studentId] || [null, null, null, null, null])];
+      newPreviews[index] = preview;
+      return { ...prev, [studentId]: newPreviews };
+    });
+    
+    setExistingPhotos((prev) => {
+      const newExisting = [...(prev[studentId] || [null, null, null, null, null])];
+      newExisting[index] = null;
+      return { ...prev, [studentId]: newExisting };
+    });
+    
     setSuccess((prev) => ({ ...prev, [studentId]: false }));
   };
 
-  const removePhoto = (studentId: string) => {
-    setPhotoFiles((prev) => ({ ...prev, [studentId]: null }));
-    setPhotoPreviews((prev) => ({ ...prev, [studentId]: null }));
-    setExistingPhotos((prev) => ({ ...prev, [studentId]: null }));
+  const removePhoto = (studentId: string, index: number) => {
+    setPhotoFiles((prev) => {
+      const newFiles = [...(prev[studentId] || [null, null, null, null, null])];
+      newFiles[index] = null;
+      return { ...prev, [studentId]: newFiles };
+    });
+    
+    setPhotoPreviews((prev) => {
+      const newPreviews = [...(prev[studentId] || [null, null, null, null, null])];
+      newPreviews[index] = null;
+      return { ...prev, [studentId]: newPreviews };
+    });
+    
+    setExistingPhotos((prev) => {
+      const newExisting = [...(prev[studentId] || [null, null, null, null, null])];
+      newExisting[index] = null;
+      return { ...prev, [studentId]: newExisting };
+    });
+    
     setSuccess((prev) => ({ ...prev, [studentId]: false }));
   };
 
@@ -111,16 +158,15 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
     formData.append("activityId", activityId);
     formData.append("studentId", studentId);
     
-    if (notes[studentId]) {
-      formData.append("notes", notes[studentId]);
-    }
-    
-    if (photoFiles[studentId]) {
-      formData.append("photo", photoFiles[studentId]!);
-    }
-    
-    if (existingPhotos[studentId]) {
-      formData.append("existing_photo", existingPhotos[studentId]!);
+    for (let i = 0; i < 5; i++) {
+      const note = notes[studentId]?.[i];
+      if (note) formData.append(`notes_${i}`, note);
+      
+      const file = photoFiles[studentId]?.[i];
+      if (file) formData.append(`photo_${i}`, file);
+      
+      const existing = existingPhotos[studentId]?.[i];
+      if (existing) formData.append(`existing_photo_${i}`, existing);
     }
 
     const res = await saveSingleStudentProgress(formData);
@@ -205,46 +251,77 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
                 </div>
               </div>
               
-              {/* Progress Input */}
-              <div className="p-4 flex flex-col sm:flex-row gap-4">
-                <textarea
-                  value={notes[item.student.id] || ""}
-                  onChange={(e) => handleNotesChange(item.student.id, e.target.value)}
-                  placeholder="Tuliskan catatan perkembangan subyektif siswa untuk kegiatan ini..."
-                  className="w-full sm:w-2/3 min-h-[80px] rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-y"
-                />
+              {/* Progress Input with Tabs */}
+              <div className="p-4">
+                {/* Tabs */}
+                <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-thin">
+                  {[0, 1, 2, 3, 4].map((slotIndex) => {
+                    const isActive = activeTabs[item.student.id] === slotIndex;
+                    const hasData = 
+                      (notes[item.student.id]?.[slotIndex] && notes[item.student.id][slotIndex].trim() !== "") || 
+                      photoFiles[item.student.id]?.[slotIndex] || 
+                      existingPhotos[item.student.id]?.[slotIndex];
+                    
+                    return (
+                      <button
+                        key={slotIndex}
+                        onClick={() => setActiveTabs((prev) => ({ ...prev, [item.student.id]: slotIndex }))}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                          isActive
+                            ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20"
+                            : hasData
+                            ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                            : "bg-white/5 text-white/40 hover:bg-white/10"
+                        }`}
+                      >
+                        Slot {slotIndex + 1}
+                        {hasData && !isActive && <CheckCircle2 size={12} className="ml-1 opacity-70" />}
+                      </button>
+                    );
+                  })}
+                </div>
 
-                <div className="w-full sm:w-1/3 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl bg-white/5 p-4 relative overflow-hidden group">
-                  {(photoPreviews[item.student.id] || existingPhotos[item.student.id]) ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={photoPreviews[item.student.id] || existingPhotos[item.student.id] || ""} 
-                        alt="Preview" 
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <button
-                          onClick={() => removePhoto(item.student.id)}
-                          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
-                          title="Hapus foto"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus className="text-white/20 mb-2" size={24} />
-                      <span className="text-xs text-white/40 text-center">Tambahkan Foto<br/>(Maks 2MB)</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={(e) => handlePhotoSelect(item.student.id, e)}
-                      />
-                    </>
-                  )}
+                {/* Active Tab Content */}
+                <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in duration-200">
+                  <textarea
+                    value={notes[item.student.id]?.[activeTabs[item.student.id] || 0] || ""}
+                    onChange={(e) => handleNotesChange(item.student.id, activeTabs[item.student.id] || 0, e.target.value)}
+                    placeholder={`Tuliskan catatan perkembangan untuk Slot ${((activeTabs[item.student.id] || 0) + 1)}... (Opsional)`}
+                    className="w-full sm:w-2/3 min-h-[80px] rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-y"
+                  />
+
+                  <div className="w-full sm:w-1/3 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl bg-white/5 p-4 relative overflow-hidden group">
+                    {(photoPreviews[item.student.id]?.[activeTabs[item.student.id] || 0] || existingPhotos[item.student.id]?.[activeTabs[item.student.id] || 0]) ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                          src={photoPreviews[item.student.id]?.[activeTabs[item.student.id] || 0] || existingPhotos[item.student.id]?.[activeTabs[item.student.id] || 0] || ""} 
+                          alt="Preview" 
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button
+                            onClick={() => removePhoto(item.student.id, activeTabs[item.student.id] || 0)}
+                            className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
+                            title="Hapus foto"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="text-white/20 mb-2" size={24} />
+                        <span className="text-xs text-white/40 text-center">Tambahkan Foto<br/>(Maks 2MB)</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => handlePhotoSelect(item.student.id, activeTabs[item.student.id] || 0, e)}
+                        />
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

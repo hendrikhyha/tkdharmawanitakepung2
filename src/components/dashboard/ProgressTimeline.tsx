@@ -7,8 +7,7 @@ import { FileText, Camera, ChevronDown, ChevronUp } from "lucide-react";
 
 interface ProgressEntry {
   id: string;
-  notes: string;
-  photo_url: string | null;
+  items?: { notes: string; photo_url: string | null }[];
   activity: {
     id: string;
     theme: string;
@@ -81,7 +80,7 @@ export default function ProgressTimeline({ progressData, childName }: ProgressTi
 
   // Stats
   const totalActivities = progressData.length;
-  const withPhotos = progressData.filter((p) => p.photo_url).length;
+  const withPhotos = progressData.filter((p) => p.items?.some((item) => item.photo_url)).length;
 
   return (
     <div className="space-y-6">
@@ -158,27 +157,46 @@ export default function ProgressTimeline({ progressData, childName }: ProgressTi
                             </p>
                           )}
 
-                          {/* Notes */}
-                          <div className="mt-3 rounded-2xl bg-emerald-50/60 p-4 border border-emerald-100">
-                            <p className="text-sm text-slate-700 leading-relaxed font-medium">
-                              {entry.notes}
-                            </p>
-                          </div>
+                          {/* Items Loop */}
+                          <div className="space-y-4 mt-3">
+                            {entry.items && entry.items.length > 0 ? (
+                              entry.items.map((item, index) => (
+                                <div key={index} className="rounded-2xl bg-emerald-50/60 p-4 border border-emerald-100 relative">
+                                  {entry.items!.length > 1 && (
+                                    <div className="absolute top-4 right-4 bg-emerald-100 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                      Slot {index + 1}
+                                    </div>
+                                  )}
+                                  
+                                  {item.notes && (
+                                    <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                      {item.notes}
+                                    </p>
+                                  )}
 
-                          {/* Photo */}
-                          {entry.photo_url && (
-                            <div className="mt-3 flex items-center gap-2">
-                              <Camera size={14} className="text-blue-400" />
-                              <div className="aspect-video w-full max-w-[240px] rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={entry.photo_url}
-                                  alt="Foto Perkembangan"
-                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
+                                  {item.photo_url && (
+                                    <div className="mt-3 flex items-center gap-2">
+                                      <Camera size={14} className="text-blue-400" />
+                                      <div className="aspect-video w-full max-w-[240px] rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={item.photo_url}
+                                          alt={`Foto Perkembangan ${index + 1}`}
+                                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                                <p className="text-sm text-slate-400 italic font-medium">
+                                  Tidak ada catatan untuk kegiatan ini.
+                                </p>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

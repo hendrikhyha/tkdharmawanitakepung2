@@ -40,8 +40,7 @@ export default async function ParentProgressPage({
     .from("activity_student_progress")
     .select(`
       id,
-      notes,
-      photo_url,
+      items,
       activity_id,
       activities (
         id,
@@ -60,8 +59,7 @@ export default async function ParentProgressPage({
     .filter((p: any) => p.activities?.status === "PUBLISHED")
     .map((p: any) => ({
       id: p.id,
-      notes: p.notes,
-      photo_url: p.photo_url,
+      items: p.items,
       activity: {
         id: p.activities.id,
         theme: p.activities.theme,
