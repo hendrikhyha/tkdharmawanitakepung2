@@ -58,7 +58,7 @@ export default function ProgressForm({ activityId }: ProgressFormProps) {
           initialTabs[item.student.id] = 0;
           
           if (item.progress?.items) {
-            item.progress.items.forEach((slot, index) => {
+            item.progress.items.forEach((slot: { notes: string; photo_url?: string | null }, index: number) => {
               if (index < 5) {
                 initialNotes[item.student.id][index] = slot.notes || "";
                 initialPhotos[item.student.id][index] = slot.photo_url || null;
