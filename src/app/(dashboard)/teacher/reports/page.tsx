@@ -123,7 +123,12 @@ export default function ReportsPage() {
           a.activity_time ? ` ${a.activity_time.slice(0, 5)}` : ""
         }`;
 
-        const hasPhotos = a.activity_photos && a.activity_photos.length > 0;
+        const activityPhotos = a.activity_photos?.map(p => p.image_url) || [];
+        const progressPhotos = (a.activity_student_progress || []).flatMap(p => 
+          (p.items || []).filter(item => item.photo_url).map(item => item.photo_url as string)
+        );
+        const allPhotos = [...activityPhotos, ...progressPhotos];
+        const hasPhotos = allPhotos.length > 0;
         
         const progressStr = a.activity_student_progress?.map(p => {
           const studentName = Array.isArray(p.students) ? p.students[0]?.name : (p.students as any)?.name;
@@ -149,13 +154,13 @@ export default function ReportsPage() {
         // Embed photos into Excel cell
         if (hasPhotos) {
           let photoIndex = 0;
-          for (const photo of a.activity_photos.slice(0, 3)) {
+          for (const photoUrl of allPhotos.slice(0, 3)) {
             try {
-              const response = await fetch(photo.image_url);
+              const response = await fetch(photoUrl);
               const arrayBuffer = await response.arrayBuffer();
 
               let extension: "png" | "jpeg" = "jpeg";
-              if (photo.image_url.toLowerCase().endsWith(".png")) {
+              if (photoUrl.toLowerCase().endsWith(".png")) {
                 extension = "png";
               }
 
@@ -218,7 +223,7 @@ export default function ReportsPage() {
         `"${a.theme.replace(/"/g, '""')}${a.sub_theme && a.sub_theme !== "-" ? `\n(${a.sub_theme.replace(/"/g, '""')})` : ""}"`,
         `"${(a.description || "-").replace(/"/g, '""')}"`,
         `"${progressStr.replace(/"/g, '""')}"`,
-        `"${(a.activity_photos?.map((p) => p.image_url).join(" ; ") || "-").replace(/"/g, '""')}"`,
+        `"${([...(a.activity_photos?.map((p) => p.image_url) || []), ...((a.activity_student_progress || []).flatMap((p) => (p.items || []).filter((item) => item.photo_url).map((item) => item.photo_url as string)))].join(" ; ") || "-").replace(/"/g, '""')}"`,
       ];
     });
 
@@ -482,28 +487,39 @@ export default function ReportsPage() {
                           )}
                         </td>
                         <td className="py-3 px-3 align-top">
-                          {activity.activity_photos && activity.activity_photos.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {activity.activity_photos.map((photo) => (
-                                <div
-                                  key={photo.id}
-                                  className="h-14 w-20 rounded-lg overflow-hidden border border-white/10 print:border-gray-300 bg-black/20 shrink-0"
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={photo.image_url}
-                                    alt="Foto Kegiatan"
-                                    className="h-full w-full object-cover"
-                                  />
+                          {(() => {
+                            const activityPhotos = activity.activity_photos?.map(p => p.image_url) || [];
+                            const progressPhotos = (activity.activity_student_progress || []).flatMap(p => 
+                              (p.items || []).filter(item => item.photo_url).map(item => item.photo_url as string)
+                            );
+                            const allPhotos = [...activityPhotos, ...progressPhotos];
+
+                            if (allPhotos.length > 0) {
+                              return (
+                                <div className="flex flex-wrap gap-2">
+                                  {allPhotos.map((url, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="h-14 w-20 rounded-lg overflow-hidden border border-white/10 print:border-gray-300 bg-black/20 shrink-0"
+                                    >
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={url}
+                                        alt="Foto Kegiatan"
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 text-xs text-white/30 print:text-gray-400 font-normal">
-                              <ImageIcon size={14} />
-                              Tidak ada gambar
-                            </div>
-                          )}
+                              );
+                            }
+                            return (
+                              <div className="flex items-center gap-1 text-xs text-white/30 print:text-gray-400 font-normal">
+                                <ImageIcon size={14} />
+                                Tidak ada gambar
+                              </div>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}
